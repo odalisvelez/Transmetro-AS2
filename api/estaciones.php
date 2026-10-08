@@ -4,7 +4,15 @@ require_once "../config/conexion.php";
 
 header("Content-Type: application/json; charset=UTF-8");
 
-$sql = "SELECT * FROM estacion";
+$sql = "SELECT
+        e.id_estacion,
+        e.nombre,
+        e.id_municipalidad,
+        m.nombre AS municipalidad
+    FROM estacion e
+    INNER JOIN municipalidad m
+    ON e.id_municipalidad=m.id_municipalidad
+    ORDER BY e.id_estacion";
 
 $resultado = $conexion->query($sql);
 
