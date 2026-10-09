@@ -1,0 +1,21 @@
+
+body {
+    min-height: 100vh;
+}
+
+.navbar-brand {
+    letter-spacing: 0.3px;
+}
+
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.card-header {
+    padding: 1rem;
+}
+
+#resultadoVisita .alert {
+    margin-bottom: 0;
+}

@@ -8,6 +8,7 @@ $sql = "SELECT
         e.id_estacion,
         e.nombre,
         e.id_municipalidad,
+        e.estado,
         m.nombre AS municipalidad
     FROM estacion e
     INNER JOIN municipalidad m

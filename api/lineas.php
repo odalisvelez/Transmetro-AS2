@@ -8,6 +8,7 @@
             l.id_linea,
             l.nombre,
             l.id_municipalidad,
+            l.estado,
             m.nombre AS municipalidad
         FROM linea l
         INNER JOIN municipalidad m
