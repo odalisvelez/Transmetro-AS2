@@ -5,11 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Transmetro | Sistema de Gestión</title>
+    <title>Gestión Transmetro | Panel principal</title>
 
-    <!-- Bootstrap 5 -->
+    <!-- Bootstrap 5.3.3 -->
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Iconos de Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
         rel="stylesheet"
     >
 
@@ -17,194 +23,284 @@
     <link rel="stylesheet" href="css/estilos.css">
 </head>
 
-<body class="bg-light">
+    <body>
 
-    <!-- Barra de navegación -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="index.html">
-                Transmetro
-            </a>
+        <div class="d-flex min-vh-100">
 
-            <button
-                class="navbar-toggler"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#menuPrincipal"
-                aria-controls="menuPrincipal"
-                aria-expanded="false"
-                aria-label="Mostrar navegación"
-            >
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <!-- Menú lateral -->
+            <aside class="sidebar d-flex flex-column">
 
-            <div class="collapse navbar-collapse" id="menuPrincipal">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="index.html">
-                            Inicio
-                        </a>
-                    </li>
+                <a href="index.html" class="brand">
+                    <i class="bi bi-bus-front-fill"></i>
+                    <span>Gestión Transmetro</span>
+                </a>
 
-                    <li class="nav-item">
-                        <a class="nav-link" href="#registrar-visita">
-                            Registrar visita
-                        </a>
-                    </li>
+                <div class="sidebar-heading">
+                    MENÚ PRINCIPAL
+                </div>
 
-                    <li class="nav-item">
-                        <a class="nav-link" href="#alertas">
-                            Alertas
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+                <nav class="nav flex-column">
 
-    <!-- Contenido principal -->
-    <main class="container py-4">
+                    <a href="index.html" class="nav-link active">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Inicio</span>
+                    </a>
 
-        <section class="mb-4">
-            <h1 class="h3 fw-bold">Sistema de Gestión Transmetro</h1>
+                    <div class="sidebar-heading mt-4">
+                        ADMINISTRACIÓN
+                    </div>
 
-            <p class="text-secondary">
-                Administración de rutas, estaciones, buses y demanda
-                de pasajeros.
-            </p>
-        </section>
+                    <a href="pages/municipalidades.html" class="nav-link">
+                        <i class="bi bi-buildings"></i>
+                        <span>Municipalidades</span>
+                    </a>
 
-        <!-- Resumen -->
-        <section class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h2 class="h6 text-secondary">Registro de visitas</h2>
+                    <a href="pages/lineas.html" class="nav-link">
+                        <i class="bi bi-signpost-2"></i>
+                        <span>Líneas</span>
+                    </a>
+
+                    <a href="pages/estaciones.html" class="nav-link">
+                        <i class="bi bi-geo-alt"></i>
+                        <span>Estaciones</span>
+                    </a>
+
+                    <a href="pages/accesos.html" class="nav-link">
+                        <i class="bi bi-door-open"></i>
+                        <span>Accesos</span>
+                    </a>
+
+                    <a href="pages/parqueos.html" class="nav-link">
+                        <i class="bi bi-p-circle"></i>
+                        <span>Parqueos</span>
+                    </a>
+
+                    <a href="pages/buses.html" class="nav-link">
+                        <i class="bi bi-bus-front"></i>
+                        <span>Buses</span>
+                    </a>
+
+                    <a href="pages/pilotos.html" class="nav-link">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Pilotos</span>
+                    </a>
+
+                    <a href="pages/guardias.html" class="nav-link">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Guardias</span>
+                    </a>
+
+                    <a href="pages/operadores.html" class="nav-link">
+                        <i class="bi bi-person-gear"></i>
+                        <span>Operadores</span>
+                    </a>
+
+                    <a href="pages/equipos.html" class="nav-link">
+                        <i class="bi bi-pc-display"></i>
+                        <span>Equipos</span>
+                    </a>
+
+                    <a href="pages/historial-educativo.html" class="nav-link">
+                        <i class="bi bi-mortarboard"></i>
+                        <span>Historial educativo</span>
+                    </a>
+
+                    <div class="sidebar-heading mt-4">
+                        OPERACIONES
+                    </div>
+
+                    <a href="pages/visitas.html" class="nav-link">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Visitas de buses</span>
+                    </a>
+
+                    <a href="pages/alertas.html" class="nav-link">
+                        <i class="bi bi-bell"></i>
+                        <span>Alertas</span>
+                    </a>
+
+                </nav>
+
+                <div class="sidebar-footer mt-auto">
+                    Sistema de gestión
+                    <br>
+                    <span>Transmetro Guatemala</span>
+                </div>
+
+            </aside>
+
+            <!-- Área principal -->
+            <div class="main-content flex-grow-1">
+
+                <!-- Encabezado -->
+                <header class="topbar">
+                    <div>
+                        <span class="text-secondary small">
+                            SISTEMA DE ADMINISTRACIÓN
+                        </span>
+                        <h1 class="page-title mb-0">Panel principal</h1>
+                    </div>
+
+                    <div class="system-status">
+                        <span class="status-dot"></span>
+                        Interfaz inicial
+                    </div>
+                </header>
+
+                <main class="container-fluid p-4">
+
+                    <!-- Bienvenida -->
+                    <section class="welcome-section mb-4">
+                        <h2>Bienvenido a Gestión Transmetro</h2>
                         <p class="mb-0">
-                            Captura la demanda de pasajeros en cada estación.
+                            Administra la información de líneas, estaciones,
+                            buses y operaciones del sistema.
                         </p>
-                    </div>
-                </div>
+                    </section>
+
+                    <!-- Accesos rápidos -->
+                    <section class="mb-4">
+                        <div class="section-heading">
+                            <h2>Accesos rápidos</h2>
+                            <p>Selecciona el módulo que deseas consultar.</p>
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <a href="pages/municipalidades.html"
+                                class="module-card">
+                                    <div class="module-icon">
+                                        <i class="bi bi-buildings"></i>
+                                    </div>
+                                    <h3>Municipalidades</h3>
+                                    <p>Gestionar municipalidades registradas.</p>
+                                    <span class="module-action">
+                                        Abrir módulo
+                                        <i class="bi bi-arrow-right"></i>
+                                    </span>
+                                </a>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <a href="pages/lineas.html"
+                                class="module-card">
+                                    <div class="module-icon">
+                                        <i class="bi bi-signpost-2"></i>
+                                    </div>
+                                    <h3>Líneas</h3>
+                                    <p>Consultar y administrar líneas.</p>
+                                    <span class="module-action">
+                                        Abrir módulo
+                                        <i class="bi bi-arrow-right"></i>
+                                    </span>
+                                </a>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <a href="pages/estaciones.html"
+                                class="module-card">
+                                    <div class="module-icon">
+                                        <i class="bi bi-geo-alt"></i>
+                                    </div>
+                                    <h3>Estaciones</h3>
+                                    <p>Consultar estaciones del sistema.</p>
+                                    <span class="module-action">
+                                        Abrir módulo
+                                        <i class="bi bi-arrow-right"></i>
+                                    </span>
+                                </a>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <a href="pages/buses.html"
+                                class="module-card">
+                                    <div class="module-icon">
+                                        <i class="bi bi-bus-front"></i>
+                                    </div>
+                                    <h3>Buses</h3>
+                                    <p>Consultar y administrar buses.</p>
+                                    <span class="module-action">
+                                        Abrir módulo
+                                        <i class="bi bi-arrow-right"></i>
+                                    </span>
+                                </a>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <a href="pages/visitas.html"
+                                class="module-card">
+                                    <div class="module-icon">
+                                        <i class="bi bi-clipboard-check"></i>
+                                    </div>
+                                    <h3>Visitas de buses</h3>
+                                    <p>Registrar visitas y demanda de pasajeros.</p>
+                                    <span class="module-action">
+                                        Abrir módulo
+                                        <i class="bi bi-arrow-right"></i>
+                                    </span>
+                                </a>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <a href="pages/alertas.html"
+                                class="module-card">
+                                    <div class="module-icon">
+                                        <i class="bi bi-bell"></i>
+                                    </div>
+                                    <h3>Alertas</h3>
+                                    <p>Consultar las alertas generadas.</p>
+                                    <span class="module-action">
+                                        Abrir módulo
+                                        <i class="bi bi-arrow-right"></i>
+                                    </span>
+                                </a>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <!-- Estado del desarrollo -->
+                    <section class="development-panel">
+                        <div class="development-icon">
+                            <i class="bi bi-info-circle"></i>
+                        </div>
+
+                        <div>
+                            <h2>Panel de control</h2>
+                            <p class="mb-0">
+                                La interfaz inicial está preparada.
+                                Los módulos se incorporarán progresivamente
+                                y sus datos se mostrarán al conectarlos con
+                                las API del sistema.
+                            </p>
+                        </div>
+                    </section>
+
+                </main>
+
+                <footer class="main-footer">
+                    Gestión Transmetro 2026
+                </footer>
+
             </div>
 
-            <div class="col-md-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h2 class="h6 text-secondary">Control de alertas</h2>
-                        <p class="mb-0">
-                            Consulta las alertas generadas automáticamente
-                            por la demanda.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Registro de visitas -->
-        <section id="registrar-visita" class="card shadow-sm mb-4">
-            <div class="card-header bg-white">
-                <h2 class="h5 mb-0">Registrar visita de un bus</h2>
-            </div>
-
-            <div class="card-body">
-                <form id="formVisita">
-
-                    <div class="mb-3">
-                        <label for="id_bus" class="form-label">
-                            Bus
-                        </label>
-
-                        <select
-                            id="id_bus"
-                            name="id_bus"
-                            class="form-select"
-                            required
-                        >
-                            <option value="">Selecciona un bus</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="id_estacion" class="form-label">
-                            Estación
-                        </label>
-
-                        <select
-                            id="id_estacion"
-                            name="id_estacion"
-                            class="form-select"
-                            required
-                        >
-                            <option value="">Selecciona una estación</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="pasajeros_esperando" class="form-label">
-                            Pasajeros esperando
-                        </label>
-
-                        <input
-                            type="number"
-                            id="pasajeros_esperando"
-                            name="pasajeros_esperando"
-                            class="form-control"
-                            min="0"
-                            step="1"
-                            required
-                        >
-                    </div>
-
-                    <button type="submit" class="btn btn-success">
-                        Registrar visita
-                    </button>
-                </form>
-
-                <div
-                    id="resultadoVisita"
-                    class="mt-3"
-                    role="status"
-                    aria-live="polite"
-                ></div>
-            </div>
-        </section>
-
-        <!-- Alertas -->
-        <section id="alertas" class="card shadow-sm mb-4">
-            <div class="card-header bg-white d-flex
-                        justify-content-between align-items-center">
-                <h2 class="h5 mb-0">Alertas del sistema</h2>
-
-                <button id="btnActualizarAlertas"
-                        class="btn btn-outline-success btn-sm">
-                    Actualizar
-                </button>
-            </div>
-
-            <div class="card-body">
-                <div id="listaAlertas">
-                    <p class="text-secondary mb-0">
-                        Cargando alertas...
-                    </p>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <footer class="bg-white border-top py-3">
-        <div class="container text-center text-secondary small">
-            Sistema de Transmetro
         </div>
-    </footer>
 
     <!-- Bootstrap -->
-    <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-    </script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+        </script>
+        <script src="js/api.js"></script>
 
-    <!-- JavaScript propio -->
-    <script src="js/app.js"></script>
-
-</body>
+        <script>
+            solicitarAPI("municipalidades.php")
+                .then(datos => {
+                    console.log("Municipalidades:", datos);
+                })
+                .catch(error => {
+                    console.error("Error:", error.message);
+                });
+        </script>
+    </body>
 </html>

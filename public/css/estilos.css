@@ -1,21 +1,425 @@
 
+/* =========================================
+   1. CONFIGURACIÓN GENERAL
+   ========================================= */
+
+:root {
+    --color-primario: #145c43;
+    --color-primario-hover: #1b7556;
+    --color-sidebar: #103f32;
+    --color-sidebar-hover: #1b5744;
+    --color-fondo: #f4f6f8;
+    --color-texto: #24332e;
+    --color-texto-secundario: #6c7a74;
+    --color-borde: #e4e9e6;
+    --color-blanco: #ffffff;
+    --radio-borde: 12px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
+    margin: 0;
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =========================================
+   2. MENÚ LATERAL
+   ========================================= */
+
+.sidebar {
+    width: 260px;
+    min-width: 260px;
+    min-height: 100vh;
+    padding: 22px 14px;
+    background-color: var(--color-sidebar);
+    color: var(--color-blanco);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px 24px;
+    color: var(--color-blanco);
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.brand i {
+    font-size: 28px;
+}
+
+.brand:hover {
+    color: var(--color-blanco);
+}
+
+.sidebar-heading {
+    padding: 12px 12px 8px;
+    color: #a9c4b8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 2px 0;
+    padding: 11px 12px;
+    border-radius: 8px;
+    color: #e0ebe5;
+    font-size: 14px;
+    transition: background-color 0.2s ease,
+                color 0.2s ease;
+}
+
+.sidebar .nav-link i {
+    width: 20px;
+    font-size: 17px;
+    text-align: center;
+}
+
+.sidebar .nav-link:hover {
+    background-color: var(--color-sidebar-hover);
+    color: var(--color-blanco);
+}
+
+.sidebar .nav-link.active {
+    background-color: var(--color-primario-hover);
+    color: var(--color-blanco);
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    margin-top: 28px;
+    padding: 16px 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    color: #c1d3ca;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.sidebar-footer span {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* =========================================
+   3. ÁREA PRINCIPAL Y ENCABEZADO
+   ========================================= */
+
+.main-content {
+    min-width: 0;
+    background-color: var(--color-fondo);
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 30px;
+    background-color: var(--color-blanco);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.topbar .small {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.page-title {
+    margin-top: 5px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-borde);
+    border-radius: 20px;
+    background-color: #f8faf9;
+    color: var(--color-texto-secundario);
+    font-size: 12px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #d6a243;
+}
+
+/* =========================================
+   4. BIENVENIDA
+   ========================================= */
+
+.welcome-section {
+    padding: 25px;
+    border-radius: var(--radio-borde);
+    background: linear-gradient(120deg, #145c43, #24795a);
+    color: var(--color-blanco);
+}
+
+.welcome-section h2 {
+    margin-bottom: 10px;
+    font-size: 23px;
+    font-weight: 700;
+}
+
+.welcome-section p {
+    max-width: 700px;
+    color: #e1eee7;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* =========================================
+   5. TÍTULOS DE SECCIÓN
+   ========================================= */
+
+.section-heading {
+    margin-bottom: 18px;
+}
+
+.section-heading h2 {
+    margin-bottom: 5px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.section-heading p {
+    margin-bottom: 0;
+    color: var(--color-texto-secundario);
+    font-size: 13px;
+}
+
+/* =========================================
+   6. TARJETAS DE MÓDULOS
+   ========================================= */
+
+.module-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 215px;
+    padding: 20px;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-borde);
+    background-color: var(--color-blanco);
+    color: var(--color-texto);
+    text-decoration: none;
+    box-shadow: 0 2px 7px rgba(25, 55, 42, 0.04);
+    transition: transform 0.2s ease,
+                box-shadow 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.module-card:hover {
+    transform: translateY(-3px);
+    border-color: #b7d4c6;
+    box-shadow: 0 8px 20px rgba(25, 55, 42, 0.09);
+    color: var(--color-texto);
+}
+
+.module-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    background-color: #e8f3ed;
+    color: var(--color-primario);
+}
+
+.module-icon i {
+    font-size: 23px;
+}
+
+.module-card h3 {
+    margin-bottom: 8px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.module-card p {
+    margin-bottom: 18px;
+    color: var(--color-texto-secundario);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.module-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    color: var(--color-primario);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* =========================================
+   7. AVISO INFORMATIVO
+   ========================================= */
+
+.development-panel {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid #d9e8df;
+    border-radius: var(--radio-borde);
+    background-color: #edf5f0;
+}
+
+.development-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background-color: #d9ebdf;
+    color: var(--color-primario);
+    font-size: 20px;
+}
+
+.development-panel h2 {
+    margin-bottom: 6px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.development-panel p {
+    color: #52675c;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+/* =========================================
+   8. PIE DE PÁGINA
+   ========================================= */
+
+.main-footer {
+    padding: 18px 25px;
+    border-top: 1px solid var(--color-borde);
+    background-color: var(--color-blanco);
+    color: var(--color-texto-secundario);
+    text-align: center;
+    font-size: 12px;
+}
+
+/* =========================================
+   9. ADAPTACIÓN A PANTALLAS PEQUEÑAS
+   ========================================= */
+
+@media (max-width: 767.98px) {
+
+    .sidebar {
+        width: 76px;
+        min-width: 76px;
+        padding: 18px 8px;
+    }
+
+    .brand {
+        justify-content: center;
+        padding: 8px 0 24px;
+    }
+
+    .brand span,
+    .sidebar-heading,
+    .sidebar .nav-link span,
+    .sidebar-footer {
+        display: none;
+    }
+
+    .sidebar .nav-link {
+        justify-content: center;
+        padding: 12px 5px;
+    }
+
+    .sidebar .nav-link i {
+        font-size: 20px;
+    }
+
+    .topbar {
+        align-items: flex-start;
+        padding: 18px;
+    }
+
+    .page-title {
+        font-size: 20px;
+    }
+
+    .system-status {
+        padding: 7px 9px;
+        font-size: 10px;
+    }
+
+    .container-fluid.p-4 {
+        padding: 16px !important;
+    }
+
+    .welcome-section {
+        padding: 20px;
+    }
+
+    .welcome-section h2 {
+        font-size: 19px;
+    }
+
+    .module-card {
+        min-height: 195px;
+    }
+}
+
+@media (max-width: 400px) {
+
+    .system-status {
+        display: none;
+    }
+
+    .sidebar {
+        width: 62px;
+        min-width: 62px;
+        padding-right: 5px;
+        padding-left: 5px;
+    }
+}
+
+
+.app-container {
+    display: flex;
     min-height: 100vh;
 }
 
-.navbar-brand {
-    letter-spacing: 0.3px;
+#contenedorMenu {
+    flex: 0 0 260px;
 }
 
-.card {
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+#contenedorMenu .sidebar {
+    width: 260px;
+    min-width: 260px;
 }
 
-.card-header {
-    padding: 1rem;
-}
-
-#resultadoVisita .alert {
-    margin-bottom: 0;
+.main-content {
+    flex: 1;
+    min-width: 0;
+    background-color: var(--color-fondo);
 }

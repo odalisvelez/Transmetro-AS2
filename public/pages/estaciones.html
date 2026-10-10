@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Estaciones | Gestión Transmetro</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="../css/estilos.css">
+</head>
+
+<body>
+    <div class="app-container">
+
+        <div id="contenedorMenu"></div>
+
+        <main class="main-content">
+
+            <div id="contenedorEncabezado"></div>
+
+            <section class="content-section">
+
+                <div class="section-header">
+                    <div>
+                        <h2>Gestión de estaciones</h2>
+                        <p>
+                            Consulta y administra las estaciones
+                            registradas en el sistema.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn-success"
+                        id="btnNuevaEstacion"
+                    >
+                        <i class="bi bi-plus-lg"></i>
+                        Nueva estación
+                    </button>
+                </div>
+
+                <div class="module-card">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre de estación</th>
+                                    <th>Municipalidad</th>
+                                    <th>Estado</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="tablaEstaciones">
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        Cargando estaciones...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para registrar o editar -->
+    <div
+        class="modal fade"
+        id="modalEstacion"
+        tabindex="-1"
+        aria-labelledby="tituloModalEstacion"
+        aria-hidden="true"
+    >
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloModalEstacion">
+                        Nueva estación
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"
+                    ></button>
+                </div>
+
+                <form id="formEstacion">
+                    <div class="modal-body">
+
+                        <div class="mb-3">
+                            <label
+                                for="nombreEstacion"
+                                class="form-label"
+                            >
+                                Nombre de la estación
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="nombreEstacion"
+                                name="nombre"
+                                maxlength="150"
+                                placeholder="Ej. Estación Central"
+                                required
+                            >
+                        </div>
+
+                        <div class="mb-3">
+                            <label
+                                for="municipalidadEstacion"
+                                class="form-label"
+                            >
+                                Municipalidad
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="municipalidadEstacion"
+                                name="id_municipalidad"
+                                required
+                            >
+                                <option value="">
+                                    Selecciona una municipalidad
+                                </option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-success"
+                        >
+                            Guardar estación
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/componentes.js"></script>
+    <script src="../js/modulos/estaciones.js"></script>
+
+    <script>
+        cargarComponente(
+            "contenedorMenu",
+            "../componentes/menu.html"
+        );
+
+        cargarComponente(
+            "contenedorEncabezado",
+            "../componentes/encabezado.html"
+        );
+    </script>
+</body>
+</html>
