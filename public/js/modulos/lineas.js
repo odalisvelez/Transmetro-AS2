@@ -86,7 +86,7 @@ async function cargarLineas() {
             botonDesactivar.type = "button";
             botonDesactivar.className =
                 "btn btn-sm btn-outline-danger";
-            botonDesactivar.textContent = "Desactivar";
+            botonDesactivar.textContent = "Eliminar";
             botonDesactivar.dataset.accion = "desactivar";
             botonDesactivar.dataset.id = linea.id_linea;
             botonDesactivar.dataset.nombre = linea.nombre;
