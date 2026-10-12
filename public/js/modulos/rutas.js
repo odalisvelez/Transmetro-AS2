@@ -24,6 +24,9 @@ const botonGuardarCambios = document.getElementById("btnGuardarCambios");
 
 const panelAgregarEstacion = document.getElementById("panelAgregarEstacion");
 
+const distanciaTotal = document.getElementById("distanciaTotal");
+const estadoDistancia = document.getElementById("estadoDistancia");
+
 // ============================================
 // ESTADO DEL MÓDULO
 // ============================================
@@ -163,14 +166,10 @@ async function cargarRutaActual() {
 // ============================================
 
 function mostrarRutaActual() {
-
     tablaRuta.innerHTML = "";
-
-    contadorEstaciones.textContent =
-        `${rutaActual.length} estaciones`;
+    contadorEstaciones.textContent = `${rutaActual.length} estaciones`;
 
     if (rutaActual.length === 0) {
-
         tablaRuta.innerHTML = `
             <tr>
                 <td colspan="4" class="text-center">
@@ -178,41 +177,51 @@ function mostrarRutaActual() {
                 </td>
             </tr>
         `;
-
         return;
     }
 
-    rutaActual.forEach(detalle => {
+    calcularDistanciaTotal();
 
+    rutaActual.forEach(detalle => {
         const fila = document.createElement("tr");
 
+        // Orden
         const celdaOrden = document.createElement("td");
         celdaOrden.textContent = detalle.orden;
 
+        // Estación
         const celdaEstacion = document.createElement("td");
         celdaEstacion.textContent = detalle.estacion;
 
+        // Distancia a la siguiente estación
         const celdaDistancia = document.createElement("td");
 
-        celdaDistancia.textContent =
+        if (
             detalle.distancia_a_siguiente === null ||
             detalle.distancia_a_siguiente === ""
-                ? "No definida"
-                : `${detalle.distancia_a_siguiente} km`;
+        ) {
+            celdaDistancia.textContent = "No definida";
+        } else {
+            celdaDistancia.textContent =
+                `${detalle.distancia_a_siguiente} km`;
+        }
 
+        // Acciones
         const celdaAcciones = document.createElement("td");
         celdaAcciones.className = "text-end";
 
         const botonEditar = document.createElement("button");
         botonEditar.type = "button";
-        botonEditar.className = "btn btn-sm btn-outline-primary me-2";
+        botonEditar.className =
+            "btn btn-sm btn-outline-primary me-2";
         botonEditar.textContent = "Editar";
         botonEditar.dataset.accion = "editar";
         botonEditar.dataset.idEstacion = detalle.id_estacion;
 
         const botonQuitar = document.createElement("button");
         botonQuitar.type = "button";
-        botonQuitar.className = "btn btn-sm btn-outline-danger";
+        botonQuitar.className =
+            "btn btn-sm btn-outline-danger";
         botonQuitar.textContent = "Quitar";
         botonQuitar.dataset.accion = "quitar";
         botonQuitar.dataset.idEstacion = detalle.id_estacion;
@@ -227,7 +236,6 @@ function mostrarRutaActual() {
         );
 
         tablaRuta.appendChild(fila);
-
     });
 }
 
@@ -372,3 +380,240 @@ botonConfirmarAgregar.addEventListener("click", async () => {
         botonConfirmarAgregar.disabled = false;
     }
 });
+
+
+/* =========================================
+   EDITAR ORDEN Y DISTANCIA
+========================================= */
+
+tablaRuta.addEventListener("click", async (evento) => {
+    const boton = evento.target.closest("button[data-accion]");
+
+    if (!boton) {
+        return;
+    }
+
+    const accion = boton.dataset.accion;
+    const idEstacion = Number(boton.dataset.idEstacion);
+
+    // Buscar la estación seleccionada en la ruta actual
+    const detalle = rutaActual.find(
+        elemento => Number(elemento.id_estacion) === idEstacion
+    );
+
+    if (!detalle) {
+        return;
+    }
+
+    // Por ahora, programaremos solamente Editar
+    if (accion !== "editar") {
+        return;
+    }
+
+    const fila = boton.closest("tr");
+
+    // Evitar crear el formulario más de una vez
+    if (fila.dataset.editando === "true") {
+        return;
+    }
+
+    fila.dataset.editando = "true";
+
+    // Campo para el orden
+    const celdaOrden = fila.cells[0];
+    celdaOrden.innerHTML = "";
+
+    const campoOrden = document.createElement("input");
+    campoOrden.type = "number";
+    campoOrden.min = "1";
+    campoOrden.step = "1";
+    campoOrden.className = "form-control form-control-sm";
+    campoOrden.value = detalle.orden;
+
+    celdaOrden.appendChild(campoOrden);
+
+    // Campo para la distancia
+    const celdaDistancia = fila.cells[2];
+    celdaDistancia.innerHTML = "";
+
+    const campoDistancia = document.createElement("input");
+    campoDistancia.type = "number";
+    campoDistancia.min = "0";
+    campoDistancia.step = "0.01";
+    campoDistancia.className = "form-control form-control-sm";
+    campoDistancia.placeholder = "Distancia en km";
+    campoDistancia.value =
+        detalle.distancia_a_siguiente ?? "";
+
+    celdaDistancia.appendChild(campoDistancia);
+
+    // Reemplazar botones por Guardar y Cancelar
+    const celdaAcciones = fila.cells[3];
+    celdaAcciones.innerHTML = "";
+
+    const botonGuardar = document.createElement("button");
+    botonGuardar.type = "button";
+    botonGuardar.className = "btn btn-sm btn-success me-2";
+    botonGuardar.textContent = "Guardar";
+    botonGuardar.dataset.accion = "guardar";
+    botonGuardar.dataset.idEstacion = idEstacion;
+
+    const botonCancelar = document.createElement("button");
+    botonCancelar.type = "button";
+    botonCancelar.className = "btn btn-sm btn-secondary";
+    botonCancelar.textContent = "Cancelar";
+    botonCancelar.dataset.accion = "cancelar";
+    botonCancelar.dataset.idEstacion = idEstacion;
+
+    celdaAcciones.append(botonGuardar, botonCancelar);
+});
+
+
+/* =========================================
+   GUARDAR O CANCELAR EDICIÓN
+========================================= */
+
+tablaRuta.addEventListener("click", async (evento) => {
+    const boton = evento.target.closest("button[data-accion]");
+
+    if (!boton) {
+        return;
+    }
+
+    const accion = boton.dataset.accion;
+
+    // Procesar solamente Guardar o Cancelar
+    if (accion !== "guardar" && accion !== "cancelar") {
+        return;
+    }
+
+    const idEstacion = Number(boton.dataset.idEstacion);
+
+    if (accion === "cancelar") {
+        mostrarRutaActual();
+        return;
+    }
+
+    const fila = boton.closest("tr");
+    const campoOrden = fila.cells[0].querySelector("input");
+    const campoDistancia = fila.cells[2].querySelector("input");
+
+    const orden = Number(campoOrden.value);
+    const distanciaTexto = campoDistancia.value.trim();
+
+    // Validar el orden
+    if (
+        campoOrden.value.trim() === "" ||
+        !Number.isInteger(orden) ||
+        orden < 1
+    ) {
+        alert("El orden debe ser un número entero mayor que cero.");
+        campoOrden.focus();
+        return;
+    }
+
+    // Validar la distancia, que puede quedar vacía
+    let distancia = null;
+
+    if (distanciaTexto !== "") {
+        distancia = Number(distanciaTexto);
+
+        if (!Number.isFinite(distancia) || distancia < 0) {
+            alert("La distancia debe ser un número mayor o igual a cero.");
+            campoDistancia.focus();
+            return;
+        }
+
+        // Limitar a dos decimales
+        if (Math.round(distancia * 100) !== distancia * 100) {
+            alert("La distancia debe tener como máximo dos decimales.");
+            campoDistancia.focus();
+            return;
+        }
+    }
+
+    const idLinea = Number(seleccionLinea.value);
+
+    const datos = {
+        orden: orden,
+        distancia_a_siguiente: distancia
+    };
+
+    boton.disabled = true;
+
+    try {
+        const url =
+            `${API_RUTAS}?id_linea=${idLinea}&id_estacion=${idEstacion}`;
+
+        await solicitarAPI(url, "PUT", datos);
+
+        alert("Los cambios se guardaron correctamente.");
+
+        await cargarRutaActual();
+
+    } catch (error) {
+        console.error("Error al guardar los cambios:", error);
+
+        alert(
+            "No se pudieron guardar los cambios.\n" +
+            error.message
+        );
+
+    } finally {
+        boton.disabled = false;
+    }
+});
+
+
+/* =========================================
+   CALCULAR DISTANCIA TOTAL DE LA LÍNEA
+========================================= */
+
+function calcularDistanciaTotal() {
+    if (!seleccionLinea.value) {
+        distanciaTotal.textContent = "-- km";
+        estadoDistancia.textContent = "Selecciona una línea";
+        estadoDistancia.className = "badge text-bg-secondary";
+        return;
+    }
+
+    if (rutaActual.length === 0) {
+        distanciaTotal.textContent = "-- km";
+        estadoDistancia.textContent = "Sin estaciones";
+        estadoDistancia.className = "badge text-bg-secondary";
+        return;
+    }
+
+    const distancias = rutaActual.map(detalle => {
+        const valor = detalle.distancia_a_siguiente;
+
+        if (valor === null || valor === "") {
+            return null;
+        }
+
+        const numero = Number(valor);
+
+        return Number.isFinite(numero) && numero >= 0
+            ? numero
+            : null;
+    });
+
+    const hayDistanciasPendientes = distancias.some(
+        distancia => distancia === null
+    );
+
+    const total = distancias.reduce(
+        (suma, distancia) => suma + (distancia ?? 0),
+        0
+    );
+
+    distanciaTotal.textContent = `${total.toFixed(2)} km`;
+
+    if (hayDistanciasPendientes) {
+        estadoDistancia.textContent = "Distancia parcial: hay tramos pendientes";
+        estadoDistancia.className = "badge text-bg-warning";
+    } else {
+        estadoDistancia.textContent = "Distancia completa";
+        estadoDistancia.className = "badge text-bg-success";
+    }
+}

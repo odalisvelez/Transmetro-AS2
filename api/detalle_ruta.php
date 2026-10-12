@@ -128,22 +128,16 @@ function validarDistancia($datos) {
 
     if ($valor === null || $valor === "") {
         return [
-            "valida" => true,
-            "valor" => null
-        ];
+            "valida" => true, "valor" => null];
     }
 
     if (!is_numeric($valor) || (float)$valor < 0) {
         return [
-            "valida" => false,
-            "valor" => null
-        ];
+            "valida" => false, "valor" => null];
     }
 
     return [
-        "valida" => true,
-        "valor" => (float)$valor
-    ];
+        "valida" => true, "valor" => (float)$valor];
 }
 
 /**
@@ -288,6 +282,8 @@ elseif ($metodo === "POST") {
         "distancia_a_siguiente" => $valorDistancia
     ]);
 }
+
+
 
 /**
  * PUT: actualizar el orden y la distancia.
