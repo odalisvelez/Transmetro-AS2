@@ -165,6 +165,7 @@ async function cargarRutaActual() {
 // MOSTRAR ESTACIONES DEL RECORRIDO
 // ============================================
 
+/*
 function mostrarRutaActual() {
     tablaRuta.innerHTML = "";
     contadorEstaciones.textContent = `${rutaActual.length} estaciones`;
@@ -237,8 +238,81 @@ function mostrarRutaActual() {
 
         tablaRuta.appendChild(fila);
     });
-}
+} */
 
+    
+function mostrarRutaActual() {
+    tablaRuta.innerHTML = "";
+
+    if (rutaActual.length === 0) {
+        tablaRuta.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                    Esta línea todavía no tiene estaciones.
+                </td>
+            </tr>
+        `;
+
+        contadorEstaciones.textContent = "0 estaciones";
+        botonGuardarCambios.disabled = true;
+        calcularDistanciaTotal();
+        return;
+    }
+
+    rutaActual.forEach(detalle => {
+        const fila = document.createElement("tr");
+
+        const distancia = detalle.distancia_a_siguiente === null ||
+                          detalle.distancia_a_siguiente === ""
+            ? "No definida"
+            : `${Number(detalle.distancia_a_siguiente).toFixed(2)} km`;
+
+        fila.innerHTML = `
+            <td>
+                <input
+                    type="number"
+                    class="form-control form-control-sm campo-orden-ruta"
+                    min="1"
+                    step="1"
+                    value="${Number(detalle.orden)}"
+                    data-id-estacion="${Number(detalle.id_estacion)}"
+                    aria-label="Orden de ${detalle.estacion}"
+                >
+            </td>
+
+            <td>${detalle.estacion}</td>
+
+            <td>${distancia}</td>
+
+            <td class="text-end">
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    data-accion="editar"
+                    data-id-estacion="${Number(detalle.id_estacion)}">
+                    <i class="bi bi-pencil"></i> Editar distancia
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    data-accion="quitar"
+                    data-id-estacion="${Number(detalle.id_estacion)}">
+                    <i class="bi bi-trash"></i> Quitar
+                </button>
+            </td>
+        `;
+
+        tablaRuta.appendChild(fila);
+    });
+
+    contadorEstaciones.textContent =
+        `${rutaActual.length} estación(es)`;
+
+    botonGuardarCambios.disabled = true;
+
+    calcularDistanciaTotal();
+}
 // ============================================
 // EVENTOS
 // ============================================
@@ -386,86 +460,66 @@ botonConfirmarAgregar.addEventListener("click", async () => {
    EDITAR ORDEN Y DISTANCIA
 ========================================= */
 
-tablaRuta.addEventListener("click", async (evento) => {
+
+tablaRuta.addEventListener("click", (evento) => {
     const boton = evento.target.closest("button[data-accion]");
 
-    if (!boton) {
-        return;
-    }
+    if (!boton) return;
 
     const accion = boton.dataset.accion;
+
+    if (accion !== "editar") return;
+
     const idEstacion = Number(boton.dataset.idEstacion);
 
-    // Buscar la estación seleccionada en la ruta actual
     const detalle = rutaActual.find(
         elemento => Number(elemento.id_estacion) === idEstacion
     );
 
-    if (!detalle) {
-        return;
-    }
-
-    // Por ahora, programaremos solamente Editar
-    if (accion !== "editar") {
-        return;
-    }
+    if (!detalle) return;
 
     const fila = boton.closest("tr");
-
-    // Evitar crear el formulario más de una vez
-    if (fila.dataset.editando === "true") {
-        return;
-    }
-
-    fila.dataset.editando = "true";
-
-    // Campo para el orden
-    const celdaOrden = fila.cells[0];
-    celdaOrden.innerHTML = "";
-
-    const campoOrden = document.createElement("input");
-    campoOrden.type = "number";
-    campoOrden.min = "1";
-    campoOrden.step = "1";
-    campoOrden.className = "form-control form-control-sm";
-    campoOrden.value = detalle.orden;
-
-    celdaOrden.appendChild(campoOrden);
-
-    // Campo para la distancia
+    const campoOrden = fila.querySelector(".campo-orden-ruta");
     const celdaDistancia = fila.cells[2];
-    celdaDistancia.innerHTML = "";
-
-    const campoDistancia = document.createElement("input");
-    campoDistancia.type = "number";
-    campoDistancia.min = "0";
-    campoDistancia.step = "0.01";
-    campoDistancia.className = "form-control form-control-sm";
-    campoDistancia.placeholder = "Distancia en km";
-    campoDistancia.value =
-        detalle.distancia_a_siguiente ?? "";
-
-    celdaDistancia.appendChild(campoDistancia);
-
-    // Reemplazar botones por Guardar y Cancelar
     const celdaAcciones = fila.cells[3];
-    celdaAcciones.innerHTML = "";
 
-    const botonGuardar = document.createElement("button");
-    botonGuardar.type = "button";
-    botonGuardar.className = "btn btn-sm btn-success me-2";
-    botonGuardar.textContent = "Guardar";
-    botonGuardar.dataset.accion = "guardar";
-    botonGuardar.dataset.idEstacion = idEstacion;
+    // Evitar modificar el orden mientras se edita la distancia.
+    campoOrden.disabled = true;
 
-    const botonCancelar = document.createElement("button");
-    botonCancelar.type = "button";
-    botonCancelar.className = "btn btn-sm btn-secondary";
-    botonCancelar.textContent = "Cancelar";
-    botonCancelar.dataset.accion = "cancelar";
-    botonCancelar.dataset.idEstacion = idEstacion;
+    const distanciaActual =
+        detalle.distancia_a_siguiente === null ||
+        detalle.distancia_a_siguiente === ""
+            ? ""
+            : Number(detalle.distancia_a_siguiente);
 
-    celdaAcciones.append(botonGuardar, botonCancelar);
+    celdaDistancia.innerHTML = `
+        <input
+            type="number"
+            class="form-control form-control-sm campo-distancia"
+            min="0"
+            step="0.01"
+            value="${distanciaActual}"
+            placeholder="Distancia en km"
+        >
+    `;
+
+    celdaAcciones.innerHTML = `
+        <button
+            type="button"
+            class="btn btn-sm btn-success"
+            data-accion="guardar-distancia"
+            data-id-estacion="${idEstacion}">
+            <i class="bi bi-check-lg"></i> Guardar
+        </button>
+
+        <button
+            type="button"
+            class="btn btn-sm btn-secondary"
+            data-accion="cancelar-distancia"
+            data-id-estacion="${idEstacion}">
+            Cancelar
+        </button>
+    `;
 });
 
 
@@ -473,97 +527,235 @@ tablaRuta.addEventListener("click", async (evento) => {
    GUARDAR O CANCELAR EDICIÓN
 ========================================= */
 
+
 tablaRuta.addEventListener("click", async (evento) => {
     const boton = evento.target.closest("button[data-accion]");
 
-    if (!boton) {
-        return;
-    }
+    if (!boton) return;
 
     const accion = boton.dataset.accion;
 
-    // Procesar solamente Guardar o Cancelar
-    if (accion !== "guardar" && accion !== "cancelar") {
+    if (
+        accion !== "guardar-distancia" &&
+        accion !== "cancelar-distancia"
+    ) {
         return;
     }
 
     const idEstacion = Number(boton.dataset.idEstacion);
 
-    if (accion === "cancelar") {
+    // Si el usuario cancela, restauramos la fila original.
+    if (accion === "cancelar-distancia") {
         mostrarRutaActual();
         return;
     }
 
     const fila = boton.closest("tr");
-    const campoOrden = fila.cells[0].querySelector("input");
-    const campoDistancia = fila.cells[2].querySelector("input");
+    const campoDistancia = fila.querySelector(".campo-distancia");
 
-    const orden = Number(campoOrden.value);
-    const distanciaTexto = campoDistancia.value.trim();
+    const valorDistancia = campoDistancia.value.trim();
 
-    // Validar el orden
-    if (
-        campoOrden.value.trim() === "" ||
-        !Number.isInteger(orden) ||
-        orden < 1
-    ) {
-        alert("El orden debe ser un número entero mayor que cero.");
-        campoOrden.focus();
-        return;
-    }
-
-    // Validar la distancia, que puede quedar vacía
     let distancia = null;
 
-    if (distanciaTexto !== "") {
-        distancia = Number(distanciaTexto);
+    if (valorDistancia !== "") {
+        distancia = Number(valorDistancia);
 
         if (!Number.isFinite(distancia) || distancia < 0) {
             alert("La distancia debe ser un número mayor o igual a cero.");
-            campoDistancia.focus();
             return;
         }
 
-        // Limitar a dos decimales
         if (Math.round(distancia * 100) !== distancia * 100) {
             alert("La distancia debe tener como máximo dos decimales.");
-            campoDistancia.focus();
             return;
         }
+    }
+
+    const detalle = rutaActual.find(
+        elemento => Number(elemento.id_estacion) === idEstacion
+    );
+
+    if (!detalle) {
+        alert("No se encontró la estación seleccionada.");
+        return;
     }
 
     const idLinea = Number(seleccionLinea.value);
 
-    const datos = {
-        orden: orden,
-        distancia_a_siguiente: distancia
-    };
-
-    boton.disabled = true;
-
     try {
-        const url =
-            `${API_RUTAS}?id_linea=${idLinea}&id_estacion=${idEstacion}`;
+        await solicitarAPI(
+            `${API_RUTAS}?id_linea=${idLinea}&id_estacion=${idEstacion}`,
+            "PUT",
+            {
+                orden: Number(detalle.orden),
+                distancia_a_siguiente: distancia
+            }
+        );
 
-        await solicitarAPI(url, "PUT", datos);
-
-        alert("Los cambios se guardaron correctamente.");
+        alert("Distancia actualizada correctamente.");
 
         await cargarRutaActual();
 
     } catch (error) {
-        console.error("Error al guardar los cambios:", error);
-
-        alert(
-            "No se pudieron guardar los cambios.\n" +
-            error.message
-        );
-
-    } finally {
-        boton.disabled = false;
+        alert(`No se pudo actualizar la distancia: ${error.message}`);
     }
 });
 
+// --------------EVENTO Guardar recorrido,
+
+function detectarCambiosOrden() {
+    const camposOrden = tablaRuta.querySelectorAll(".campo-orden-ruta");
+
+    const hayCambios = Array.from(camposOrden).some(campo => {
+        const idEstacion = Number(campo.dataset.idEstacion);
+
+        const detalleOriginal = rutaActual.find(
+            elemento => Number(elemento.id_estacion) === idEstacion
+        );
+
+        return detalleOriginal &&
+            Number(campo.value) !== Number(detalleOriginal.orden);
+    });
+
+    botonGuardarCambios.disabled = !hayCambios;
+}
+
+// Habilitar Guardar recorrido cuando se modifica algún orden.
+tablaRuta.addEventListener("input", (evento) => {
+    if (evento.target.matches(".campo-orden-ruta")) {
+        detectarCambiosOrden();
+    }
+});
+
+// Guardar el orden completo del recorrido.
+botonGuardarCambios.addEventListener("click", async () => {
+    const idLinea = Number(seleccionLinea.value);
+
+    if (!idLinea || rutaActual.length === 0) {
+        alert("Selecciona una línea que tenga estaciones.");
+        return;
+    }
+
+    const camposOrden = Array.from(
+        tablaRuta.querySelectorAll(".campo-orden-ruta")
+    );
+
+    const estaciones = camposOrden.map(campo => ({
+        id_estacion: Number(campo.dataset.idEstacion),
+        orden: Number(campo.value)
+    }));
+
+    // Validar que todos los órdenes sean enteros positivos.
+    const ordenesValidos = estaciones.every(estacion =>
+        Number.isInteger(estacion.orden) && estacion.orden > 0
+    );
+
+    if (!ordenesValidos) {
+        alert("Todos los órdenes deben ser números enteros positivos.");
+        return;
+    }
+
+    // Evitar posiciones duplicadas.
+    const ordenes = estaciones.map(estacion => estacion.orden);
+    const ordenesUnicos = new Set(ordenes);
+
+    if (ordenesUnicos.size !== ordenes.length) {
+        alert("No puede haber dos estaciones con el mismo orden.");
+        return;
+    }
+
+    // Confirmar que realmente cambió el orden.
+    const hayCambios = estaciones.some(estacion => {
+        const original = rutaActual.find(
+            detalle =>
+                Number(detalle.id_estacion) === estacion.id_estacion
+        );
+
+        return original &&
+            Number(original.orden) !== estacion.orden;
+    });
+
+    if (!hayCambios) {
+        botonGuardarCambios.disabled = true;
+        alert("No hay cambios en el orden del recorrido.");
+        return;
+    }
+
+    const confirmar = confirm(
+        "¿Deseas guardar el nuevo orden? Las distancias registradas " +
+        "se restablecerán y tendrás que ingresarlas nuevamente."
+    );
+
+    if (!confirmar) return;
+
+    botonGuardarCambios.disabled = true;
+
+    try {
+        await solicitarAPI(
+            `${API_RUTAS}?accion=reordenar`,
+            "PUT",
+            {
+                id_linea: idLinea,
+                estaciones: estaciones
+            }
+        );
+
+        alert("El orden del recorrido se actualizó correctamente.");
+
+        await cargarRutaActual();
+
+    } catch (error) {
+        alert(`No se pudo reordenar el recorrido: ${error.message}`);
+
+        detectarCambiosOrden();
+    }
+});
+
+//------EVENTO para quitar una estación del recorrido
+
+tablaRuta.addEventListener("click", async (evento) => {
+    const boton = evento.target.closest('button[data-accion="quitar"]');
+
+    if (!boton) return;
+
+    const idLinea = Number(seleccionLinea.value);
+    const idEstacion = Number(boton.dataset.idEstacion);
+
+    if (!idLinea || !idEstacion) {
+        alert("No se pudo identificar la línea o la estación.");
+        return;
+    }
+
+    const detalle = rutaActual.find(
+        elemento =>
+            Number(elemento.id_estacion) === idEstacion
+    );
+
+    if (!detalle) {
+        alert("La estación ya no forma parte de este recorrido.");
+        return;
+    }
+
+    const confirmar = confirm(
+        `¿Deseas quitar la estación "${detalle.estacion}" de esta línea?`
+    );
+
+    if (!confirmar) return;
+
+    try {
+        await solicitarAPI(
+            `${API_RUTAS}?id_linea=${idLinea}&id_estacion=${idEstacion}`,
+            "DELETE"
+        );
+
+        alert("Estación quitada del recorrido correctamente.");
+
+        await cargarRutaActual();
+
+    } catch (error) {
+        alert(`No se pudo quitar la estación: ${error.message}`);
+    }
+});
 
 /* =========================================
    CALCULAR DISTANCIA TOTAL DE LA LÍNEA
@@ -584,7 +776,19 @@ function calcularDistanciaTotal() {
         return;
     }
 
-    const distancias = rutaActual.map(detalle => {
+    // No existe ningún tramo si hay menos de dos estaciones.
+    if (rutaActual.length < 2) {
+        distanciaTotal.textContent = "0.00 km";
+        estadoDistancia.textContent = "Sin tramos por calcular";
+        estadoDistancia.className = "badge text-bg-secondary";
+        return;
+    }
+
+    // Solo contamos las estaciones que tienen una siguiente.
+    // La última estación no representa un tramo.
+    const tramos = rutaActual.slice(0, -1);
+
+    const distancias = tramos.map(detalle => {
         const valor = detalle.distancia_a_siguiente;
 
         if (valor === null || valor === "") {
@@ -610,10 +814,14 @@ function calcularDistanciaTotal() {
     distanciaTotal.textContent = `${total.toFixed(2)} km`;
 
     if (hayDistanciasPendientes) {
-        estadoDistancia.textContent = "Distancia parcial: hay tramos pendientes";
+        estadoDistancia.textContent =
+            "Distancia parcial: hay tramos pendientes";
+
         estadoDistancia.className = "badge text-bg-warning";
     } else {
         estadoDistancia.textContent = "Distancia completa";
         estadoDistancia.className = "badge text-bg-success";
     }
 }
+
+

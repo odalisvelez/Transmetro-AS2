@@ -284,6 +284,210 @@ elseif ($metodo === "POST") {
 }
 
 
+/**
+ * PUT: reordenar todas las estaciones de una línea.
+ * URL: detalle_ruta.php?accion=reordenar
+ */
+if (
+    $metodo === "PUT" &&
+    ($_GET["accion"] ?? "") === "reordenar"
+) {
+
+    if (
+        !is_array($datos) ||
+        !isset($datos["id_linea"]) ||
+        !isset($datos["estaciones"]) ||
+        !is_array($datos["estaciones"])
+    ) {
+        responder(400, [
+            "error" => "Debes enviar id_linea y una lista de estaciones."
+        ]);
+    }
+
+    $idLinea = filter_var(
+        $datos["id_linea"],
+        FILTER_VALIDATE_INT
+    );
+
+    if ($idLinea === false || $idLinea <= 0) {
+        responder(400, [
+            "error" => "El ID de la línea debe ser un entero positivo."
+        ]);
+    }
+
+    if (!lineaActiva($conexion, $idLinea)) {
+        responder(400, [
+            "error" => "La línea no existe o está inactiva."
+        ]);
+    }
+
+    if (count($datos["estaciones"]) === 0) {
+        responder(400, [
+            "error" => "La lista de estaciones no puede estar vacía."
+        ]);
+    }
+
+    $estacionesNuevas = [];
+    $idsVistos = [];
+    $ordenesVistos = [];
+
+    foreach ($datos["estaciones"] as $estacion) {
+
+        if (
+            !is_array($estacion) ||
+            !isset($estacion["id_estacion"]) ||
+            !isset($estacion["orden"])
+        ) {
+            responder(400, [
+                "error" => "Cada estación debe incluir id_estacion y orden."
+            ]);
+        }
+
+        $idEstacion = filter_var(
+            $estacion["id_estacion"],
+            FILTER_VALIDATE_INT
+        );
+
+        $orden = filter_var(
+            $estacion["orden"],
+            FILTER_VALIDATE_INT
+        );
+
+        if (
+            $idEstacion === false || $idEstacion <= 0 ||
+            $orden === false || $orden <= 0
+        ) {
+            responder(400, [
+                "error" => "Los IDs y órdenes deben ser enteros positivos."
+            ]);
+        }
+
+        if (
+            isset($idsVistos[$idEstacion]) ||
+            isset($ordenesVistos[$orden])
+        ) {
+            responder(400, [
+                "error" => "No se permiten estaciones ni órdenes duplicados."
+            ]);
+        }
+
+        $idsVistos[$idEstacion] = true;
+        $ordenesVistos[$orden] = true;
+
+        $estacionesNuevas[] = [
+            "id_estacion" => $idEstacion,
+            "orden" => $orden
+        ];
+    }
+
+    // Obtener las estaciones que actualmente pertenecen a la línea.
+    $stmt = $conexion->prepare(
+        "SELECT id_estacion
+         FROM Detalle_Ruta
+         WHERE id_linea = ?
+         ORDER BY orden"
+    );
+
+    $stmt->bind_param("i", $idLinea);
+    $stmt->execute();
+
+    $resultado = $stmt->get_result();
+    $idsActuales = [];
+
+    while ($fila = $resultado->fetch_assoc()) {
+        $idsActuales[] = (int)$fila["id_estacion"];
+    }
+
+    $stmt->close();
+
+    $idsNuevos = array_column(
+        $estacionesNuevas,
+        "id_estacion"
+    );
+
+    sort($idsActuales);
+    $idsNuevosOrdenados = $idsNuevos;
+    sort($idsNuevosOrdenados);
+
+    // La operación solo reordena; no agrega ni quita estaciones.
+    if ($idsActuales !== $idsNuevosOrdenados) {
+        responder(400, [
+            "error" => "La lista debe contener exactamente las estaciones actuales de la línea."
+        ]);
+    }
+
+    foreach ($idsNuevos as $idEstacion) {
+        if (!estacionActiva($conexion, $idEstacion)) {
+            responder(400, [
+                "error" => "Todas las estaciones deben estar activas."
+            ]);
+        }
+    }
+
+    // Ordenar temporalmente para evitar conflictos con el índice UNIQUE.
+    $conexion->begin_transaction();
+
+    try {
+
+        $stmtTemporal = $conexion->prepare(
+            "UPDATE Detalle_Ruta
+             SET orden = orden + 1000000
+             WHERE id_linea = ?"
+        );
+
+        $stmtTemporal->bind_param("i", $idLinea);
+        $stmtTemporal->execute();
+        $stmtTemporal->close();
+
+        // Aplicar los nuevos órdenes y dejar las distancias pendientes.
+        $stmtActualizar = $conexion->prepare(
+            "UPDATE Detalle_Ruta
+             SET orden = ?,
+                 distancia_a_siguiente = NULL
+             WHERE id_linea = ?
+               AND id_estacion = ?"
+        );
+
+        foreach ($estacionesNuevas as $estacion) {
+
+            $orden = $estacion["orden"];
+            $idEstacion = $estacion["id_estacion"];
+
+            $stmtActualizar->bind_param(
+                "iii",
+                $orden,
+                $idLinea,
+                $idEstacion
+            );
+
+            $stmtActualizar->execute();
+
+            if ($stmtActualizar->affected_rows < 0) {
+                throw new Exception(
+                    "No se pudo actualizar una estación."
+                );
+            }
+        }
+
+        $stmtActualizar->close();
+
+        $conexion->commit();
+
+        responder(200, [
+            "mensaje" => "El recorrido se reordenó correctamente. Registra nuevamente las distancias.",
+            "id_linea" => $idLinea,
+            "estaciones_actualizadas" => count($estacionesNuevas)
+        ]);
+
+    } catch (Throwable $error) {
+
+        $conexion->rollback();
+
+        responder(500, [
+            "error" => "No se pudo reordenar el recorrido. Los cambios fueron revertidos."
+        ]);
+    }
+}
 
 /**
  * PUT: actualizar el orden y la distancia.
