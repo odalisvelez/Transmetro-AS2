@@ -22,6 +22,8 @@ if ($metodo === "GET") {
             FROM parqueo p
             INNER JOIN estacion e
                 ON p.id_estacion = e.id_estacion
+            
+            WHERE p.estado = 1
             ORDER BY p.id_parqueo";
 
     $resultado = $conexion->query($sql);
@@ -233,6 +235,7 @@ if ($metodo === "GET") {
 } elseif ($metodo === "DELETE") {
 
     // ---------- DELETE: DESACTIVAR PARQUEO ----------
+
     if (!$id_parqueo || $id_parqueo <= 0) {
         http_response_code(400);
 
@@ -243,6 +246,7 @@ if ($metodo === "GET") {
         exit;
     }
 
+    // 1. Comprobar que el parqueo exista
     $sql = "SELECT estado
             FROM parqueo
             WHERE id_parqueo = ?";
@@ -266,6 +270,7 @@ if ($metodo === "GET") {
         exit;
     }
 
+    // 2. Comprobar que esté activo
     if ((int) $parqueo["estado"] !== 1) {
         http_response_code(409);
 
@@ -276,10 +281,51 @@ if ($metodo === "GET") {
         exit;
     }
 
-    $sql = "UPDATE parqueo SET estado = 0 WHERE id_parqueo = ?";
+    // 3. Comprobar si hay buses activos asignados
+    $sql = "SELECT COUNT(*) AS total_buses
+            FROM bus
+            WHERE id_parqueo = ?
+              AND estado = 1";
+
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("i", $id_parqueo);
     $stmt->execute();
+
+    $resultado = $stmt->get_result();
+    $fila = $resultado->fetch_assoc();
+
+    $stmt->close();
+
+    if ((int) $fila["total_buses"] > 0) {
+        http_response_code(409);
+
+        echo json_encode([
+            "error" => "No se puede desactivar el parqueo porque tiene buses activos asignados. Reasigna primero esos buses a otro parqueo activo."
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+    // 4. Desactivar el parqueo
+    $sql = "UPDATE parqueo
+            SET estado = 0
+            WHERE id_parqueo = ?";
+
+    $stmt = $conexion->prepare($sql);
+    $stmt->bind_param("i", $id_parqueo);
+
+    if (!$stmt->execute()) {
+        $stmt->close();
+
+        http_response_code(500);
+
+        echo json_encode([
+            "error" => "No se pudo desactivar el parqueo."
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
     $stmt->close();
 
     http_response_code(200);

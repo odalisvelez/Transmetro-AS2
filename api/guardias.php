@@ -36,6 +36,7 @@ if ($metodo === "GET") {
                 ON g.id_acceso = a.id_acceso
             INNER JOIN estacion e
                 ON a.id_estacion = e.id_estacion
+            WHERE g.estado = 1
             ORDER BY g.id_guardia";
 
     $resultado = $conexion->query($sql);
@@ -236,7 +237,8 @@ if ($metodo === "PUT") {
     ]);
 }
 
-// DELETE: eliminación lógica
+
+ // DELETE: eliminación lógica
 if ($metodo === "DELETE") {
 
     if (!$id || $id <= 0) {
@@ -245,9 +247,11 @@ if ($metodo === "DELETE") {
         ]);
     }
 
-    // Comprobar si el guardia existe
+    // 1. Comprobar si el guardia existe y obtener su acceso
     $verificar = $conexion->prepare(
-        "SELECT estado FROM guardia WHERE id_guardia = ?"
+        "SELECT estado, id_acceso
+         FROM guardia
+         WHERE id_guardia = ?"
     );
 
     $verificar->bind_param("i", $id);
@@ -262,25 +266,73 @@ if ($metodo === "DELETE") {
 
     $guardia = $resultado->fetch_assoc();
 
+    // 2. Comprobar que el guardia esté activo
     if ((int)$guardia["estado"] !== 1) {
         responder(409, [
             "error" => "El guardia ya está inactivo"
         ]);
     }
 
-    // No se elimina físicamente el registro
+    $id_acceso = (int)$guardia["id_acceso"];
+
+    // 3. Consultar el estado del acceso al que pertenece el guardia
+    $consultaAcceso = $conexion->prepare(
+        "SELECT estado
+         FROM acceso
+         WHERE id_acceso = ?"
+    );
+
+    $consultaAcceso->bind_param("i", $id_acceso);
+    $consultaAcceso->execute();
+    $resultadoAcceso = $consultaAcceso->get_result();
+    $acceso = $resultadoAcceso->fetch_assoc();
+
+    // 4. Si el acceso está activo, verificar sus guardias activos
+    if ($acceso && (int)$acceso["estado"] === 1) {
+
+        $consultaGuardias = $conexion->prepare(
+            "SELECT COUNT(*) AS total_guardias
+             FROM guardia
+             WHERE id_acceso = ?
+               AND estado = 1"
+        );
+
+        $consultaGuardias->bind_param("i", $id_acceso);
+        $consultaGuardias->execute();
+        $resultadoGuardias = $consultaGuardias->get_result();
+        $datosGuardias = $resultadoGuardias->fetch_assoc();
+
+        $totalGuardias = (int)$datosGuardias["total_guardias"];
+
+        // No permitir desactivar al último guardia del acceso
+        if ($totalGuardias <= 1) {
+            responder(409, [
+                "error" => "No se puede desactivar este guardia porque es el último guardia activo del acceso. Asigna primero otro guardia activo a este acceso."
+            ]);
+        }
+    }
+
+    // 5. Desactivar el guardia sin eliminarlo físicamente
     $sql = "UPDATE guardia
             SET estado = 0
-            WHERE id_guardia = ? AND estado = 1";
+            WHERE id_guardia = ?
+              AND estado = 1";
 
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("i", $id);
 
     if ($stmt->execute()) {
-        responder(200, [
-            "mensaje" => "Guardia desactivado correctamente",
-            "id_guardia" => $id,
-            "estado" => 0
+
+        if ($stmt->affected_rows === 1) {
+            responder(200, [
+                "mensaje" => "Guardia desactivado correctamente",
+                "id_guardia" => $id,
+                "estado" => 0
+            ]);
+        }
+
+        responder(409, [
+            "error" => "El guardia ya no está activo o fue modificado"
         ]);
     }
 
@@ -288,6 +340,7 @@ if ($metodo === "DELETE") {
         "error" => "No se pudo desactivar el guardia"
     ]);
 }
+
 
 // Método HTTP no permitido
 responder(405, [

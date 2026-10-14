@@ -77,6 +77,7 @@ async function cargarMunicipalidades() {
             celdaNombre.textContent = municipalidad.nombre;
 
             const celdaAcciones = document.createElement("td");
+            celdaAcciones.className = "text-center";
 
             const botonEditar = document.createElement("button");
             botonEditar.type = "button";

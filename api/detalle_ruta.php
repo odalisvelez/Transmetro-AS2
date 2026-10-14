@@ -57,6 +57,137 @@ function estacionActiva($conexion, $idEstacion) {
 }
 
 /**
+ * Obtener el estado operativo de la línea y contar
+ * sus estaciones y buses activos.
+ */
+function obtenerResumenReglasRuta($conexion, $idLinea) {
+
+    $stmt = $conexion->prepare(
+        "SELECT estado_operativo
+         FROM Linea
+         WHERE id_linea = ? AND estado = 1"
+    );
+
+    $stmt->bind_param("i", $idLinea);
+    $stmt->execute();
+
+    $resultado = $stmt->get_result();
+    $linea = $resultado->fetch_assoc();
+    $stmt->close();
+
+    if (!$linea) {
+        return null;
+    }
+
+    $stmt = $conexion->prepare(
+        "SELECT COUNT(*) AS total
+         FROM Detalle_Ruta dr
+         INNER JOIN Estacion e
+             ON e.id_estacion = dr.id_estacion
+         WHERE dr.id_linea = ?
+           AND e.estado = 1"
+    );
+
+    $stmt->bind_param("i", $idLinea);
+    $stmt->execute();
+
+    $estaciones = (int)$stmt->get_result()
+        ->fetch_assoc()["total"];
+
+    $stmt->close();
+
+    $stmt = $conexion->prepare(
+        "SELECT COUNT(*) AS total
+         FROM Bus
+         WHERE id_linea = ?
+           AND estado = 1"
+    );
+
+    $stmt->bind_param("i", $idLinea);
+    $stmt->execute();
+
+    $buses = (int)$stmt->get_result()
+        ->fetch_assoc()["total"];
+
+    $stmt->close();
+
+    return [
+        "estado_operativo" => $linea["estado_operativo"],
+        "estaciones" => $estaciones,
+        "buses" => $buses
+    ];
+}
+
+/**
+ * Validar RN-06 y RN-07 ante un cambio en la cantidad
+ * de estaciones de la ruta.
+ *
+ * $variacion: +1 al agregar, -1 al quitar.
+ */
+function validarReglasRuta(
+    $conexion,
+    $idLinea,
+    $variacion
+) {
+
+    $resumen = obtenerResumenReglasRuta(
+        $conexion,
+        $idLinea
+    );
+
+    if ($resumen === null) {
+        return [
+            "codigo" => 400,
+            "error" => "La línea no existe o está inactiva."
+        ];
+    }
+
+    // Permitir configurar la ruta gradualmente.
+    if ($resumen["estado_operativo"] !== "OPERATIVA") {
+        return null;
+    }
+
+    $estacionesActuales = $resumen["estaciones"];
+    $buses = $resumen["buses"];
+
+    $estacionesProyectadas =
+        $estacionesActuales + $variacion;
+
+    if ($estacionesProyectadas < 1) {
+        return [
+            "codigo" => 409,
+            "error" => "Una línea operativa debe conservar al menos una estación activa."
+        ];
+    }
+
+    // RN-06: buses activos >= estaciones activas.
+    if ($buses < $estacionesProyectadas) {
+        return [
+            "codigo" => 409,
+            "error" => "La operación incumple RN-06: la cantidad de buses activos sería inferior a las estaciones activas.",
+            "estaciones_proyectadas" => $estacionesProyectadas,
+            "buses_activos" => $buses,
+            "buses_minimos_requeridos" => $estacionesProyectadas
+        ];
+    }
+
+    // RN-07: buses activos <= 2 * estaciones activas.
+    $busesMaximos = 2 * $estacionesProyectadas;
+
+    if ($buses > $busesMaximos) {
+        return [
+            "codigo" => 409,
+            "error" => "La operación incumple RN-07: la cantidad de buses activos superaría el doble de las estaciones activas.",
+            "estaciones_proyectadas" => $estacionesProyectadas,
+            "buses_activos" => $buses,
+            "buses_maximos_permitidos" => $busesMaximos
+        ];
+    }
+
+    return null;
+}
+
+/**
  * Validar si una estación ya pertenece a una línea.
  */
 function relacionExiste($conexion, $idLinea, $idEstacion) {
@@ -247,6 +378,21 @@ elseif ($metodo === "POST") {
         responder(409, [
             "error" => "Ya existe una estación con ese orden en la línea."
         ]);
+    }
+
+    
+    // Validar RN-06 y RN-07 antes de agregar la estación.
+    $errorReglas = validarReglasRuta(
+        $conexion,
+        $idLinea,
+        1
+    );
+
+    if ($errorReglas !== null) {
+        $codigo = $errorReglas["codigo"];
+        unset($errorReglas["codigo"]);
+
+        responder($codigo, $errorReglas);
     }
 
     $valorDistancia = $distancia["valor"];
@@ -653,6 +799,27 @@ elseif ($metodo === "DELETE") {
         responder(409, [
             "error" => "No se puede eliminar esta relación porque tiene alertas asociadas."
         ]);
+    }
+
+    
+    // Si la estación está activa, la eliminación reduce
+    // en uno el total de estaciones activas de la ruta.
+    $variacionEstaciones = estacionActiva(
+        $conexion,
+        $idEstacion
+    ) ? -1 : 0;
+
+    $errorReglas = validarReglasRuta(
+        $conexion,
+        $idLinea,
+        $variacionEstaciones
+    );
+
+    if ($errorReglas !== null) {
+        $codigo = $errorReglas["codigo"];
+        unset($errorReglas["codigo"]);
+
+        responder($codigo, $errorReglas);
     }
 
     $stmt = $conexion->prepare(

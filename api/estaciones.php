@@ -60,6 +60,115 @@ function nombreEstacionExiste($conexion, $nombre, $idExcluir = 0) {
     return $existe;
 }
 
+
+/**
+ * Validar RN-06 y RN-07 antes de desactivar una estación.
+ * Revisa todas las líneas operativas que utilizan la estación.
+ */
+function validarDesactivacionEstacion($conexion, $idEstacion) {
+
+    // Obtener todas las líneas operativas que utilizan la estación.
+    $stmt = $conexion->prepare(
+        "SELECT DISTINCT l.id_linea
+         FROM Detalle_Ruta dr
+         INNER JOIN Linea l
+             ON l.id_linea = dr.id_linea
+         WHERE dr.id_estacion = ?
+           AND l.estado = 1
+           AND l.estado_operativo = 'OPERATIVA'"
+    );
+
+    $stmt->bind_param("i", $idEstacion);
+    $stmt->execute();
+
+    $resultado = $stmt->get_result();
+    $lineas = [];
+
+    while ($fila = $resultado->fetch_assoc()) {
+        $lineas[] = (int)$fila["id_linea"];
+    }
+
+    $stmt->close();
+
+    // Revisar las reglas en cada línea afectada.
+    foreach ($lineas as $idLinea) {
+
+        // Contar estaciones activas que quedarían después
+        // de desactivar la estación indicada.
+        $stmt = $conexion->prepare(
+            "SELECT COUNT(*) AS total
+             FROM Detalle_Ruta dr
+             INNER JOIN Estacion e
+                 ON e.id_estacion = dr.id_estacion
+             WHERE dr.id_linea = ?
+               AND e.estado = 1
+               AND dr.id_estacion != ?"
+        );
+
+        $stmt->bind_param("ii", $idLinea, $idEstacion);
+        $stmt->execute();
+
+        $estacionesProyectadas = (int)$stmt->get_result()
+            ->fetch_assoc()["total"];
+
+        $stmt->close();
+
+        // Contar buses activos de la línea.
+        $stmt = $conexion->prepare(
+            "SELECT COUNT(*) AS total
+             FROM Bus
+             WHERE id_linea = ?
+               AND estado = 1"
+        );
+
+        $stmt->bind_param("i", $idLinea);
+        $stmt->execute();
+
+        $busesActivos = (int)$stmt->get_result()
+            ->fetch_assoc()["total"];
+
+        $stmt->close();
+
+        // Una línea operativa debe conservar al menos
+        // una estación activa.
+        if ($estacionesProyectadas < 1) {
+            return [
+                "codigo" => 409,
+                "error" => "No se puede desactivar la estación porque una línea operativa se quedaría sin estaciones activas.",
+                "id_linea" => $idLinea
+            ];
+        }
+
+        // RN-06: buses activos >= estaciones activas.
+        if ($busesActivos < $estacionesProyectadas) {
+            return [
+                "codigo" => 409,
+                "error" => "La operación incumple RN-06: la línea tendría más estaciones activas que buses activos.",
+                "id_linea" => $idLinea,
+                "estaciones_proyectadas" => $estacionesProyectadas,
+                "buses_activos" => $busesActivos,
+                "buses_minimos_requeridos" => $estacionesProyectadas
+            ];
+        }
+
+        // RN-07: buses activos <= 2 * estaciones activas.
+        $busesMaximos = 2 * $estacionesProyectadas;
+
+        if ($busesActivos > $busesMaximos) {
+            return [
+                "codigo" => 409,
+                "error" => "La operación incumple RN-07: la línea tendría más buses activos que el máximo permitido.",
+                "id_linea" => $idLinea,
+                "estaciones_proyectadas" => $estacionesProyectadas,
+                "buses_activos" => $busesActivos,
+                "buses_maximos_permitidos" => $busesMaximos
+            ];
+        }
+    }
+
+    return null;
+}
+
 /**
  * GET: consultar todas las estaciones.
  */
@@ -326,6 +435,21 @@ elseif ($metodo === "DELETE") {
         responder(404, [
             "error" => "La estación no existe o ya está inactiva."
         ]);
+    }
+
+    
+    // Comprobar RN-06 y RN-07 en todas las líneas
+    // operativas afectadas por la desactivación.
+    $errorReglas = validarDesactivacionEstacion(
+        $conexion,
+        $id
+    );
+
+    if ($errorReglas !== null) {
+        $codigo = $errorReglas["codigo"];
+        unset($errorReglas["codigo"]);
+
+        responder($codigo, $errorReglas);
     }
 
     $stmt = $conexion->prepare(

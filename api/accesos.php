@@ -18,10 +18,17 @@ if ($metodo === "GET") {
                 a.nombre AS acceso,
                 a.id_estacion,
                 e.nombre AS estacion,
-                a.estado
+                a.estado,
+                (
+                    SELECT COUNT(*)
+                    FROM guardia g
+                    WHERE g.id_acceso = a.id_acceso
+                    AND g.estado = 1
+                ) AS guardias_activos
             FROM acceso a
             INNER JOIN estacion e
                 ON a.id_estacion = e.id_estacion
+            WHERE a.estado = 1
             ORDER BY a.id_acceso";
 
     $resultado = $conexion->query($sql);
@@ -200,6 +207,8 @@ if ($metodo === "GET") {
 } elseif ($metodo === "DELETE") {
 
     // ---------- DELETE: DESACTIVAR ACCESO ----------
+
+    // 1. Validar el ID recibido por la URL
     if (!$id_acceso || $id_acceso <= 0) {
         http_response_code(400);
 
@@ -210,16 +219,21 @@ if ($metodo === "GET") {
         exit;
     }
 
-    // Comprobar que el acceso exista
-    $sql = "SELECT id_acceso FROM acceso WHERE id_acceso = ?";
+    // 2. Comprobar que el acceso exista y esté activo
+    $sql = "SELECT estado
+            FROM acceso
+            WHERE id_acceso = ?";
+
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("i", $id_acceso);
     $stmt->execute();
+
     $resultado = $stmt->get_result();
-    $existe = $resultado->num_rows > 0;
+    $acceso = $resultado->fetch_assoc();
+
     $stmt->close();
 
-    if (!$existe) {
+    if (!$acceso) {
         http_response_code(404);
 
         echo json_encode([
@@ -229,18 +243,73 @@ if ($metodo === "GET") {
         exit;
     }
 
-    $sql = "UPDATE acceso SET estado = 0 WHERE id_acceso = ?";
+    if ((int)$acceso["estado"] !== 1) {
+        http_response_code(409);
+
+        echo json_encode([
+            "error" => "El acceso ya está inactivo."
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+    // 3. Comprobar si tiene guardias activos asignados
+    $sql = "SELECT COUNT(*) AS total_guardias
+            FROM guardia
+            WHERE id_acceso = ?
+              AND estado = 1";
+
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("i", $id_acceso);
     $stmt->execute();
+
+    $resultado = $stmt->get_result();
+    $fila = $resultado->fetch_assoc();
+
+    $totalGuardias = (int)$fila["total_guardias"];
+
     $stmt->close();
 
-    http_response_code(200);
+    if ($totalGuardias > 0) {
+        http_response_code(409);
+
+        echo json_encode([
+            "error" => "No se puede desactivar el acceso porque tiene guardias activos asignados. Reasigna primero esos guardias a otro acceso activo."
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+    // 4. Desactivar el acceso mediante eliminación lógica
+    $sql = "UPDATE acceso
+            SET estado = 0
+            WHERE id_acceso = ?
+              AND estado = 1";
+
+    $stmt = $conexion->prepare($sql);
+    $stmt->bind_param("i", $id_acceso);
+
+    if ($stmt->execute() && $stmt->affected_rows === 1) {
+        $stmt->close();
+
+        http_response_code(200);
+
+        echo json_encode([
+            "mensaje" => "Acceso desactivado correctamente."
+        ], JSON_UNESCAPED_UNICODE);
+
+        exit;
+    }
+
+    $stmt->close();
+
+    http_response_code(500);
 
     echo json_encode([
-        "mensaje" => "Acceso desactivado correctamente."
+        "error" => "No se pudo desactivar el acceso."
     ], JSON_UNESCAPED_UNICODE);
 
+    exit;
 } else {
 
     // ---------- MÉTODO NO PERMITIDO ----------

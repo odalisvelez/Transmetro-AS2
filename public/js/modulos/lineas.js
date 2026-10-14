@@ -1,4 +1,3 @@
-
 const API_LINEAS = "lineas.php";
 const API_MUNICIPALIDADES_LINEAS = "municipalidades.php";
 
@@ -14,8 +13,6 @@ const tituloModalLinea = document.getElementById("tituloModalLinea");
 
 const modalLinea = new bootstrap.Modal(elementoModalLinea);
 
-// Guardará el ID de la línea que estamos editando.
-// Si vale null, estamos registrando una nueva línea.
 let idLineaEditando = null;
 
 
@@ -26,7 +23,7 @@ let idLineaEditando = null;
 async function cargarLineas() {
     tablaLineas.innerHTML = `
         <tr>
-            <td colspan="5" class="text-center">
+            <td colspan="7" class="text-center">
                 Cargando líneas...
             </td>
         </tr>
@@ -37,6 +34,7 @@ async function cargarLineas() {
 
         tablaLineas.innerHTML = "";
 
+        // Mostrar únicamente las líneas administrativamente activas.
         const lineasActivas = lineas.filter(
             linea => Number(linea.estado) === 1
         );
@@ -44,7 +42,7 @@ async function cargarLineas() {
         if (lineasActivas.length === 0) {
             tablaLineas.innerHTML = `
                 <tr>
-                    <td colspan="5" class="text-center">
+                    <td colspan="7" class="text-center">
                         No hay líneas activas.
                     </td>
                 </tr>
@@ -55,25 +53,45 @@ async function cargarLineas() {
         lineasActivas.forEach(linea => {
             const fila = document.createElement("tr");
 
+            // ID
             const celdaId = document.createElement("td");
             celdaId.textContent = linea.id_linea;
 
+            // Nombre
             const celdaNombre = document.createElement("td");
             celdaNombre.textContent = linea.nombre;
 
+            // Municipalidad
             const celdaMunicipalidad = document.createElement("td");
             celdaMunicipalidad.textContent = linea.municipalidad;
 
+            // Estaciones activas de la línea
+            const celdaEstaciones = document.createElement("td");
+            celdaEstaciones.textContent = Number(linea.total_estaciones);
+
+            // Buses activos asignados a la línea
+            const celdaBuses = document.createElement("td");
+            celdaBuses.textContent = Number(linea.total_buses);
+
+            // Estado operativo
             const celdaEstado = document.createElement("td");
             const etiquetaEstado = document.createElement("span");
 
-            etiquetaEstado.className = "badge text-bg-success";
-            etiquetaEstado.textContent = "Activa";
+            if (linea.estado_operativo === "OPERATIVA") {
+                etiquetaEstado.className = "badge text-bg-success";
+                etiquetaEstado.textContent = "Operativa";
+            } else {
+                etiquetaEstado.className = "badge text-bg-warning";
+                etiquetaEstado.textContent = "En preparación";
+            }
+
             celdaEstado.appendChild(etiquetaEstado);
 
+            // Acciones
             const celdaAcciones = document.createElement("td");
             celdaAcciones.className = "text-end";
 
+            // Botón Editar
             const botonEditar = document.createElement("button");
             botonEditar.type = "button";
             botonEditar.className =
@@ -82,6 +100,22 @@ async function cargarLineas() {
             botonEditar.dataset.accion = "editar";
             botonEditar.dataset.id = linea.id_linea;
 
+            // Botón Habilitar operación
+            if (linea.estado_operativo === "PREPARACION") {
+                const botonHabilitar = document.createElement("button");
+
+                botonHabilitar.type = "button";
+                botonHabilitar.className =
+                    "btn btn-sm btn-success me-2";
+                botonHabilitar.textContent = "Habilitar operación";
+                botonHabilitar.dataset.accion = "habilitar";
+                botonHabilitar.dataset.id = linea.id_linea;
+                botonHabilitar.dataset.nombre = linea.nombre;
+
+                celdaAcciones.appendChild(botonHabilitar);
+            }
+
+            // Botón Desactivar
             const botonDesactivar = document.createElement("button");
             botonDesactivar.type = "button";
             botonDesactivar.className =
@@ -97,6 +131,8 @@ async function cargarLineas() {
                 celdaId,
                 celdaNombre,
                 celdaMunicipalidad,
+                celdaEstaciones,
+                celdaBuses,
                 celdaEstado,
                 celdaAcciones
             );
@@ -109,7 +145,7 @@ async function cargarLineas() {
 
         tablaLineas.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center text-danger">
+                <td colspan="7" class="text-center text-danger">
                     No se pudieron cargar las líneas.
                 </td>
             </tr>
@@ -128,7 +164,8 @@ async function cargarMunicipalidadesEnLista() {
             API_MUNICIPALIDADES_LINEAS
         );
 
-        campoMunicipalidadLinea.innerHTML = '<option value="">Selecciona una municipalidad</option>';
+        campoMunicipalidadLinea.innerHTML =
+            '<option value="">Selecciona una municipalidad</option>';
 
         municipalidades.forEach(municipalidad => {
             const opcion = document.createElement("option");
@@ -208,14 +245,12 @@ formularioLinea.addEventListener("submit", async function (evento) {
         let resultado;
 
         if (estaEditando) {
-            // EDITAR: método PUT
             resultado = await solicitarAPI(
                 `${API_LINEAS}?id=${idLineaEditando}`,
                 "PUT",
                 datos
             );
         } else {
-            // REGISTRAR: método POST
             resultado = await solicitarAPI(
                 API_LINEAS,
                 "POST",
@@ -244,7 +279,7 @@ formularioLinea.addEventListener("submit", async function (evento) {
 
 
 // =====================================
-// 5. EDITAR O DESACTIVAR UNA LÍNEA
+// 5. ACCIONES DE LA TABLA
 // =====================================
 
 tablaLineas.addEventListener("click", async function (evento) {
@@ -272,7 +307,6 @@ tablaLineas.addEventListener("click", async function (evento) {
         try {
             await cargarMunicipalidadesEnLista();
 
-            // Seleccionar la municipalidad actual
             const lineas = await solicitarAPI(API_LINEAS);
 
             const lineaSeleccionada = lineas.find(
@@ -295,6 +329,54 @@ tablaLineas.addEventListener("click", async function (evento) {
             console.error("Error al preparar la edición:", error);
             alert("No se pudo cargar la información para editar.");
             idLineaEditando = null;
+        }
+
+        return;
+    }
+
+    // ---------------------------------
+    // HABILITAR OPERACIÓN
+    // ---------------------------------
+
+    if (accion === "habilitar") {
+        const nombre = boton.dataset.nombre;
+
+        const confirmar = confirm(
+            `¿Deseas habilitar la operación de la línea "${nombre}"?\n\n` +
+            "El sistema verificará que tenga las estaciones y los buses necesarios."
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        boton.disabled = true;
+        boton.textContent = "Validando...";
+
+        try {
+            const resultado = await solicitarAPI(
+                `${API_LINEAS}?accion=habilitar&id=${id}`,
+                "PUT"
+            );
+
+            alert(
+                resultado.mensaje ||
+                "La línea ahora está habilitada para operar."
+            );
+
+            await cargarLineas();
+
+        } catch (error) {
+            console.error("Error al habilitar la línea:", error);
+
+            alert(
+                error.message ||
+                "No se pudo habilitar la operación de la línea."
+            );
+
+            // Si la operación falla, recuperar el botón y permitir reintentar.
+            boton.disabled = false;
+            boton.textContent = "Habilitar operación";
         }
 
         return;
@@ -330,6 +412,7 @@ tablaLineas.addEventListener("click", async function (evento) {
 
         } catch (error) {
             console.error("Error al desactivar la línea:", error);
+
             alert(
                 error.message ||
                 "No se pudo desactivar la línea."
