@@ -7,6 +7,18 @@ const btnNuevoAcceso = document.getElementById("btnNuevoAcceso");
 const modalAccesoElemento = document.getElementById("modalAcceso");
 const formAcceso = document.getElementById("formAcceso");
 
+
+const buscarAccesos = document.getElementById("buscarAccesos");
+const registrosPorPagina = document.getElementById("registrosPorPagina");
+const infoPaginacionAccesos = document.getElementById("infoPaginacionAccesos");
+const paginacionAccesos = document.getElementById("paginacionAccesos");
+
+// Datos y estado de la tabla
+let listaAccesos = [];
+let paginaActualAccesos = 1;
+let textoBusquedaAccesos = "";
+let limiteAccesos = 10;
+
 const tituloModalAcceso = document.getElementById("tituloModalAcceso");
 const nombreAcceso = document.getElementById("nombreAcceso");
 const estacionAcceso = document.getElementById("estacionAcceso");
@@ -121,13 +133,10 @@ async function cargarAccesos() {
             const celdaEstacion = document.createElement("td");
             celdaEstacion.textContent = acceso.estacion;
 
-            // para conte de guardias
+            //para conteo de guardias
             const celdaGuardias = document.createElement("td");
-
             const totalGuardias = Number(acceso.guardias_activos ?? 0);
-
             celdaGuardias.textContent = totalGuardias;
-            //
 
             const celdaEstado = document.createElement("td");
             const insignia = document.createElement("span");

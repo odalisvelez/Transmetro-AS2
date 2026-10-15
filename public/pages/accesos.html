@@ -60,6 +60,59 @@
 
                 <!-- Tabla de accesos -->
                 <div class="module-card">
+                    
+                    <!-- Controles de búsqueda y cantidad de registros -->
+                    <div class="row g-3 align-items-center mb-3">
+
+                        <div class="col-12 col-md-6">
+                            <label for="buscarAccesos" class="form-label">
+                                Buscar acceso
+                            </label>
+
+                            <input
+                                type="search"
+                                class="form-control"
+                                id="buscarAccesos"
+                                placeholder="Buscar por nombre, estación o ID..."
+                            >
+                        </div>
+
+                        <div class="col-12 col-md-3">
+                            <label for="registrosPorPagina" class="form-label">
+                                Registros por página
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="registrosPorPagina"
+                            >
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    
+                    <!-- Información de resultados y paginación -->
+                    <div class="d-flex flex-column flex-md-row
+                                justify-content-between align-items-center gap-3 mt-3">
+
+                        <p id="infoPaginacionAccesos"
+                        class="mb-0 text-muted"
+                        aria-live="polite">
+                            Mostrando registros...
+                        </p>
+
+                        <nav aria-label="Paginación de accesos">
+                            <ul class="pagination pagination-sm mb-0"
+                                id="paginacionAccesos">
+                            </ul>
+                        </nav>
+
+                    </div>
 
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
