@@ -7,12 +7,23 @@ const botonNuevaEstacion = document.getElementById("btnNuevaEstacion");
 const elementoModalEstacion = document.getElementById("modalEstacion");
 const formularioEstacion = document.getElementById("formEstacion");
 const campoNombreEstacion = document.getElementById("nombreEstacion");
-const campoMunicipalidadEstacion = document.getElementById(
-    "municipalidadEstacion"
-);
+const campoMunicipalidadEstacion = document.getElementById("municipalidadEstacion");
 const tituloModalEstacion = document.getElementById("tituloModalEstacion");
 
 const modalEstacion = new bootstrap.Modal(elementoModalEstacion);
+
+// para tabal dinam
+const buscarEstaciones = document.getElementById("buscarEstaciones");
+const registrosPorPaginaEstaciones = document.getElementById("registrosPorPaginaEstaciones");
+const infoPaginacionEstaciones = document.getElementById("infoPaginacionEstaciones");
+const paginacionEstaciones = document.getElementById("paginacionEstaciones");
+
+// Datos y estado de la tabla
+let listaEstaciones = [];
+let paginaActualEstaciones = 1;
+let textoBusquedaEstaciones = "";
+let limiteEstaciones = 10;
+
 
 let idEstacionEditando = null;
 
@@ -33,74 +44,16 @@ async function cargarEstaciones() {
     try {
         const estaciones = await solicitarAPI(API_ESTACIONES);
 
-        const estacionesActivas = estaciones.filter(
-            estacion => Number(estacion.estado) === 1
-        );
+        // Conservar únicamente las estaciones activas.
+        listaEstaciones = Array.isArray(estaciones)
+            ? estaciones.filter(
+                estacion => Number(estacion.estado) === 1
+            )
+            : [];
 
-        tablaEstaciones.innerHTML = "";
+        paginaActualEstaciones = 1;
 
-        if (estacionesActivas.length === 0) {
-            tablaEstaciones.innerHTML = `
-                <tr>
-                    <td colspan="5" class="text-center">
-                        No hay estaciones activas.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        estacionesActivas.forEach(estacion => {
-            const fila = document.createElement("tr");
-
-            const celdaId = document.createElement("td");
-            celdaId.textContent = estacion.id_estacion;
-
-            const celdaNombre = document.createElement("td");
-            celdaNombre.textContent = estacion.nombre;
-
-            const celdaMunicipalidad = document.createElement("td");
-            celdaMunicipalidad.textContent = estacion.municipalidad;
-
-            const celdaEstado = document.createElement("td");
-            const etiquetaEstado = document.createElement("span");
-
-            etiquetaEstado.className = "badge text-bg-success";
-            etiquetaEstado.textContent = "Activa";
-            celdaEstado.appendChild(etiquetaEstado);
-
-            const celdaAcciones = document.createElement("td");
-            celdaAcciones.className = "text-end";
-
-            const botonEditar = document.createElement("button");
-            botonEditar.type = "button";
-            botonEditar.className =
-                "btn btn-sm btn-outline-primary me-2";
-            botonEditar.textContent = "Editar";
-            botonEditar.dataset.accion = "editar";
-            botonEditar.dataset.id = estacion.id_estacion;
-
-            const botonDesactivar = document.createElement("button");
-            botonDesactivar.type = "button";
-            botonDesactivar.className =
-                "btn btn-sm btn-outline-danger";
-            botonDesactivar.textContent = "Eliminar";
-            botonDesactivar.dataset.accion = "desactivar";
-            botonDesactivar.dataset.id = estacion.id_estacion;
-            botonDesactivar.dataset.nombre = estacion.nombre;
-
-            celdaAcciones.append(botonEditar, botonDesactivar);
-
-            fila.append(
-                celdaId,
-                celdaNombre,
-                celdaMunicipalidad,
-                celdaEstado,
-                celdaAcciones
-            );
-
-            tablaEstaciones.appendChild(fila);
-        });
+        renderizarEstaciones();
 
     } catch (error) {
         console.error("Error al cargar estaciones:", error);
@@ -112,9 +65,208 @@ async function cargarEstaciones() {
                 </td>
             </tr>
         `;
+
+        infoPaginacionEstaciones.textContent =
+            "No se pudieron cargar los registros.";
+
+        paginacionEstaciones.innerHTML = "";
     }
 }
+ // renderizar
+ 
+function renderizarEstaciones() {
+    const texto = textoBusquedaEstaciones.toLocaleLowerCase();
 
+    const estacionesFiltradas = listaEstaciones.filter(estacion => {
+        return (
+            String(estacion.id_estacion ?? "")
+                .toLocaleLowerCase().includes(texto) ||
+            String(estacion.nombre ?? "")
+                .toLocaleLowerCase().includes(texto) ||
+            String(estacion.municipalidad ?? "")
+                .toLocaleLowerCase().includes(texto)
+        );
+    });
+
+    const totalRegistros = estacionesFiltradas.length;
+
+    const totalPaginas = Math.max(
+        1,
+        Math.ceil(totalRegistros / limiteEstaciones)
+    );
+
+    if (paginaActualEstaciones > totalPaginas) {
+        paginaActualEstaciones = totalPaginas;
+    }
+
+    tablaEstaciones.innerHTML = "";
+
+    if (totalRegistros === 0) {
+        const fila = document.createElement("tr");
+        const celda = document.createElement("td");
+
+        celda.colSpan = 5;
+        celda.className = "text-center";
+
+        celda.textContent = listaEstaciones.length === 0
+            ? "No hay estaciones activas."
+            : "No se encontraron estaciones con esa búsqueda.";
+
+        fila.appendChild(celda);
+        tablaEstaciones.appendChild(fila);
+
+        infoPaginacionEstaciones.textContent =
+            "Mostrando 0 de 0 registros";
+
+        paginacionEstaciones.innerHTML = "";
+        return;
+    }
+
+    const inicio = (paginaActualEstaciones - 1) * limiteEstaciones;
+    const fin = Math.min(inicio + limiteEstaciones, totalRegistros);
+
+    const estacionesPagina = estacionesFiltradas.slice(inicio, fin);
+
+    estacionesPagina.forEach(estacion => {
+        const fila = document.createElement("tr");
+
+        // ID
+        const celdaId = document.createElement("td");
+        celdaId.textContent = estacion.id_estacion;
+
+        // Nombre
+        const celdaNombre = document.createElement("td");
+        celdaNombre.textContent = estacion.nombre;
+
+        // Municipalidad
+        const celdaMunicipalidad = document.createElement("td");
+        celdaMunicipalidad.textContent = estacion.municipalidad;
+
+        // Estado
+        const celdaEstado = document.createElement("td");
+        const etiquetaEstado = document.createElement("span");
+
+        etiquetaEstado.className = "badge text-bg-success";
+        etiquetaEstado.textContent = "Activa";
+
+        celdaEstado.appendChild(etiquetaEstado);
+
+        // Acciones
+        const celdaAcciones = document.createElement("td");
+        celdaAcciones.className = "text-end";
+
+        const botonEditar = document.createElement("button");
+        botonEditar.type = "button";
+        botonEditar.className =
+            "btn btn-sm btn-outline-primary me-2";
+        botonEditar.textContent = "Editar";
+        botonEditar.dataset.accion = "editar";
+        botonEditar.dataset.id = estacion.id_estacion;
+
+        const botonDesactivar = document.createElement("button");
+        botonDesactivar.type = "button";
+        botonDesactivar.className =
+            "btn btn-sm btn-outline-danger";
+        botonDesactivar.textContent = "Eliminar";
+        botonDesactivar.dataset.accion = "desactivar";
+        botonDesactivar.dataset.id = estacion.id_estacion;
+        botonDesactivar.dataset.nombre = estacion.nombre;
+
+        celdaAcciones.append(botonEditar, botonDesactivar);
+
+        fila.append(
+            celdaId,
+            celdaNombre,
+            celdaMunicipalidad,
+            celdaEstado,
+            celdaAcciones
+        );
+
+        tablaEstaciones.appendChild(fila);
+    });
+
+    infoPaginacionEstaciones.textContent =
+        `Mostrando ${inicio + 1}–${fin} de ${totalRegistros} registros`;
+
+    renderizarPaginacionEstaciones(totalPaginas);
+}
+// paginacion
+
+function renderizarPaginacionEstaciones(totalPaginas) {
+    paginacionEstaciones.innerHTML = "";
+
+    function crearBoton(
+        texto,
+        pagina,
+        deshabilitado = false,
+        activo = false
+    ) {
+        const elemento = document.createElement("li");
+        elemento.className = "page-item";
+
+        if (deshabilitado) elemento.classList.add("disabled");
+        if (activo) elemento.classList.add("active");
+
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "page-link";
+        boton.textContent = texto;
+        boton.disabled = deshabilitado;
+
+        if (activo) {
+            boton.setAttribute("aria-current", "page");
+        }
+
+        boton.addEventListener("click", () => {
+            paginaActualEstaciones = pagina;
+            renderizarEstaciones();
+        });
+
+        elemento.appendChild(boton);
+        paginacionEstaciones.appendChild(elemento);
+    }
+
+    crearBoton(
+        "Anterior",
+        paginaActualEstaciones - 1,
+        paginaActualEstaciones === 1
+    );
+
+    let inicio = Math.max(1, paginaActualEstaciones - 2);
+    let fin = Math.min(totalPaginas, inicio + 4);
+
+    inicio = Math.max(1, fin - 4);
+
+    for (let pagina = inicio; pagina <= fin; pagina++) {
+        crearBoton(
+            String(pagina),
+            pagina,
+            false,
+            pagina === paginaActualEstaciones
+        );
+    }
+
+    crearBoton(
+        "Siguiente",
+        paginaActualEstaciones + 1,
+        paginaActualEstaciones === totalPaginas
+    );
+}
+// controles
+
+buscarEstaciones.addEventListener("input", () => {
+    textoBusquedaEstaciones = buscarEstaciones.value.trim();
+    paginaActualEstaciones = 1;
+
+    renderizarEstaciones();
+});
+
+registrosPorPaginaEstaciones.addEventListener("change", () => {
+    limiteEstaciones = Number(registrosPorPaginaEstaciones.value);
+    paginaActualEstaciones = 1;
+
+    renderizarEstaciones();
+});
 
 // =====================================
 // 2. CARGAR MUNICIPALIDADES

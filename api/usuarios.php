@@ -7,9 +7,7 @@ header("Content-Type: application/json; charset=UTF-8");
 
 $metodo = $_SERVER["REQUEST_METHOD"];
 
-// =====================================================
 // GET - OBTENER USUARIOS
-// =====================================================
 if ($metodo === "GET") {
 
     $sql = "SELECT
@@ -40,9 +38,7 @@ if ($metodo === "GET") {
         ], JSON_UNESCAPED_UNICODE);
     }
 
-// =====================================================
 // POST - CREAR USUARIO
-// =====================================================
 } elseif ($metodo === "POST") {
 
     $datos = json_decode(file_get_contents("php://input"), true);
@@ -124,10 +120,7 @@ if ($metodo === "GET") {
 
         $verificarRol->close();
     }
-
-// =====================================================
 // PUT - ACTUALIZAR USUARIO
-// =====================================================
 } elseif ($metodo === "PUT") {
 
     $datos = json_decode(file_get_contents("php://input"), true);
@@ -270,10 +263,7 @@ if ($metodo === "GET") {
 
         $verificarUsuario->close();
     }
-
-// =====================================================
 // DELETE - DESACTIVAR USUARIO (ELIMINACIÓN LÓGICA)
-// =====================================================
 } elseif ($metodo === "DELETE") {
 
     $datos = json_decode(file_get_contents("php://input"), true);

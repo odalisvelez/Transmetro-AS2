@@ -7,6 +7,12 @@ header("Content-Type: application/json; charset=UTF-8");
 
 $metodo = $_SERVER["REQUEST_METHOD"];
 
+$estadosPermitidos = [
+    "Operativo",
+    "En mantenimiento",
+    "Fuera de servicio"
+];
+
 $id_pc = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
 
 if ($metodo === "GET") {
@@ -14,14 +20,15 @@ if ($metodo === "GET") {
     // ---------- GET: CONSULTAR EQUIPOS ----------
     $sql = "SELECT
                 c.id_pc,
-                c.codigo_inventario AS Codigo,
+                c.codigo_inventario,
                 c.estado,
-                c.estado_resgistro,
+                c.estado_registro,
                 c.id_estacion,
                 e.nombre AS estacion
             FROM equipo_computo c
             INNER JOIN estacion e
                 ON c.id_estacion = e.id_estacion
+            WHERE c.estado_registro = 1
             ORDER BY c.id_pc";
 
     $resultado = $conexion->query($sql);
@@ -56,7 +63,8 @@ if ($metodo === "GET") {
 
     if (
         !is_string($codigo) || trim($codigo) === "" ||
-        !is_string($estado) || trim($estado) === "" ||
+        !is_string($estado) || 
+        !in_array($estado, $estadosPermitidos, true) ||
         $id_estacion === false || $id_estacion === null ||
         $id_estacion <= 0
     ) {
@@ -137,7 +145,8 @@ if ($metodo === "GET") {
 
     if (
         !is_string($codigo) || trim($codigo) === "" ||
-        !is_string($estado) || trim($estado) === "" ||
+        !is_string($estado) || 
+        !in_array($estado, $estadosPermitidos, true) ||
         $id_estacion === false || $id_estacion === null ||
         $id_estacion <= 0
     ) {

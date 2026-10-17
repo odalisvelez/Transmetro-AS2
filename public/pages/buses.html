@@ -58,6 +58,34 @@
 
                 <!-- Tabla de buses -->
                 <div class="module-card">
+                    
+                <!-- Búsqueda y paginación de buses -->
+                <div class="row g-3 align-items-center mb-3">
+                    <div class="col-12 col-md-6">
+                        <label for="buscarBuses" class="form-label">
+                            Buscar bus
+                        </label>
+                        <input
+                            type="search"
+                            class="form-control"
+                            id="buscarBuses"
+                            placeholder="Buscar por placa, línea, parqueo, piloto o ID..."
+                        >
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label for="registrosPorPaginaBuses" class="form-label">
+                            Registros por página
+                        </label>
+                        <select class="form-select" id="registrosPorPaginaBuses">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+
                     <div class="table-responsive">
 
                         <table class="table table-hover align-middle">
@@ -86,8 +114,28 @@
                         </table>
 
                     </div>
-                </div>
+                    
+                    <!-- Información y navegación de páginas -->
+                    <div class="d-flex flex-column flex-md-row
+                                justify-content-between align-items-center gap-3 mt-3">
 
+                        <p
+                            id="infoPaginacionBuses"
+                            class="mb-0 text-muted"
+                            aria-live="polite"
+                        >
+                            Mostrando registros...
+                        </p>
+
+                        <nav aria-label="Paginación de buses">
+                            <ul
+                                class="pagination pagination-sm mb-0"
+                                id="paginacionBuses"
+                            ></ul>
+                        </nav>
+
+                    </div>
+                </div>
             </section>
 
         </main>

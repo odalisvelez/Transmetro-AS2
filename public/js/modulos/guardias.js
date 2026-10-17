@@ -13,6 +13,18 @@ const telefonoGuardia = document.getElementById("telefonoGuardia");
 const accesoGuardia = document.getElementById("accesoGuardia");
 const btnGuardarGuardia = document.getElementById("btnGuardarGuardia");
 
+// para paginacion y busqueda
+const buscarGuardias = document.getElementById("buscarGuardias");
+const registrosPorPaginaGuardias = document.getElementById("registrosPorPaginaGuardias");
+const infoPaginacionGuardias = document.getElementById("infoPaginacionGuardias");
+const paginacionGuardias = document.getElementById("paginacionGuardias");
+
+// Datos y estado de la tabla
+let listaGuardias = [];
+let paginaActualGuardias = 1;
+let textoBusquedaGuardias = "";
+let limiteGuardias = 10;
+
 const modalGuardia = new bootstrap.Modal(modalGuardiaElemento);
 
 let idGuardiaEditar = null;
@@ -65,6 +77,7 @@ async function cargarAccesosGuardia(idSeleccionado = null) {
 }
 
 // Consultar y mostrar guardias
+
 async function cargarGuardias() {
     tablaGuardias.innerHTML = `
         <tr>
@@ -77,105 +90,11 @@ async function cargarGuardias() {
     try {
         const guardias = await solicitarAPI(API_GUARDIAS);
 
-        tablaGuardias.innerHTML = "";
+        listaGuardias = Array.isArray(guardias) ? guardias : [];
 
-        if (!Array.isArray(guardias) || guardias.length === 0) {
-            tablaGuardias.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">
-                        No hay guardias activos registrados.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
+        paginaActualGuardias = 1;
 
-        guardias.forEach(guardia => {
-            const fila = document.createElement("tr");
-
-            // ID
-            const celdaId = document.createElement("td");
-            celdaId.textContent = guardia.id_guardia;
-
-            // Nombre
-            const celdaNombre = document.createElement("td");
-            celdaNombre.textContent = guardia.nombre;
-
-            // Teléfono
-            const celdaTelefono = document.createElement("td");
-            celdaTelefono.textContent = guardia.telefono;
-
-            // Acceso asignado
-            const celdaAcceso = document.createElement("td");
-            celdaAcceso.textContent = guardia.acceso;
-
-            // Estado
-            const celdaEstado = document.createElement("td");
-            const insignia = document.createElement("span");
-
-            if (Number(guardia.estado) === 1) {
-                insignia.className = "badge bg-success";
-                insignia.textContent = "Activo";
-            } else {
-                insignia.className = "badge bg-secondary";
-                insignia.textContent = "Inactivo";
-            }
-
-            celdaEstado.appendChild(insignia);
-
-            
-            // Acciones
-            const celdaAcciones = document.createElement("td");
-            celdaAcciones.className = "text-end";
-
-            if (Number(guardia.estado) === 1) {
-
-                const botonEditar = document.createElement("button");
-                botonEditar.type = "button";
-                botonEditar.className =
-                    "btn btn-sm btn-outline-primary me-2";
-                botonEditar.textContent = "Editar";
-                botonEditar.dataset.accion = "editar";
-                botonEditar.dataset.id = guardia.id_guardia;
-
-                const botonDesactivar = document.createElement("button");
-                botonDesactivar.type = "button";
-                botonDesactivar.className =
-                    "btn btn-sm btn-outline-danger";
-                botonDesactivar.textContent = "Eliminar";
-                botonDesactivar.dataset.accion = "desactivar";
-                botonDesactivar.dataset.id = guardia.id_guardia;
-                botonDesactivar.dataset.nombre = guardia.nombre;
-
-                botonEditar.addEventListener("click", () => {
-                    abrirModalEditarGuardia(guardia);
-                });
-
-                botonDesactivar.addEventListener("click", () => {
-                    desactivarGuardia(
-                        botonDesactivar.dataset.id,
-                        botonDesactivar.dataset.nombre
-                    );
-                });
-
-                celdaAcciones.append(botonEditar, botonDesactivar);
-
-            } else {
-                celdaAcciones.textContent = "Sin acciones";
-            }
-
-
-            fila.append(
-                celdaId,
-                celdaNombre,
-                celdaTelefono,
-                celdaAcceso,
-                celdaEstado,
-                celdaAcciones
-            );
-
-            tablaGuardias.appendChild(fila);
-        });
+        renderizarGuardias();
 
     } catch (error) {
         console.error("Error al cargar guardias:", error);
@@ -188,9 +107,248 @@ async function cargarGuardias() {
             </tr>
         `;
 
+        infoPaginacionGuardias.textContent =
+            "No se pudieron cargar los registros.";
+
+        paginacionGuardias.innerHTML = "";
+
         alert("No se pudieron cargar los guardias: " + error.message);
     }
 }
+
+// renderizacion
+
+function renderizarGuardias() {
+    const texto = textoBusquedaGuardias.toLocaleLowerCase();
+
+    // Filtrar por ID, nombre, teléfono, acceso o estado.
+    const guardiasFiltrados = listaGuardias.filter(guardia => {
+        const estado = Number(guardia.estado) === 1
+            ? "activo"
+            : "inactivo";
+
+        return (
+            String(guardia.id_guardia).toLocaleLowerCase().includes(texto) ||
+            String(guardia.nombre ?? "").toLocaleLowerCase().includes(texto) ||
+            String(guardia.telefono ?? "").toLocaleLowerCase().includes(texto) ||
+            String(guardia.acceso ?? "").toLocaleLowerCase().includes(texto) ||
+            estado.includes(texto)
+        );
+    });
+
+    const totalRegistros = guardiasFiltrados.length;
+
+    const totalPaginas = Math.max(
+        1,
+        Math.ceil(totalRegistros / limiteGuardias)
+    );
+
+    if (paginaActualGuardias > totalPaginas) {
+        paginaActualGuardias = totalPaginas;
+    }
+
+    tablaGuardias.innerHTML = "";
+
+    // Mostrar un mensaje cuando no hay resultados.
+    if (totalRegistros === 0) {
+        const fila = document.createElement("tr");
+        const celda = document.createElement("td");
+
+        celda.colSpan = 6;
+        celda.className = "text-center";
+
+        celda.textContent = listaGuardias.length === 0
+            ? "No hay guardias registrados."
+            : "No se encontraron guardias con esa búsqueda.";
+
+        fila.appendChild(celda);
+        tablaGuardias.appendChild(fila);
+
+        infoPaginacionGuardias.textContent =
+            "Mostrando 0 de 0 registros";
+
+        paginacionGuardias.innerHTML = "";
+        return;
+    }
+
+    // Determinar los registros de la página actual.
+    const inicio = (paginaActualGuardias - 1) * limiteGuardias;
+    const fin = Math.min(
+        inicio + limiteGuardias,
+        totalRegistros
+    );
+
+    const guardiasPagina = guardiasFiltrados.slice(inicio, fin);
+
+    guardiasPagina.forEach(guardia => {
+        const fila = document.createElement("tr");
+
+        // ID
+        const celdaId = document.createElement("td");
+        celdaId.textContent = guardia.id_guardia;
+
+        // Nombre
+        const celdaNombre = document.createElement("td");
+        celdaNombre.textContent = guardia.nombre;
+
+        // Teléfono
+        const celdaTelefono = document.createElement("td");
+        celdaTelefono.textContent = guardia.telefono;
+
+        // Acceso asignado
+        const celdaAcceso = document.createElement("td");
+        celdaAcceso.textContent = guardia.acceso;
+
+        // Estado
+        const celdaEstado = document.createElement("td");
+        const insignia = document.createElement("span");
+
+        if (Number(guardia.estado) === 1) {
+            insignia.className = "badge bg-success";
+            insignia.textContent = "Activo";
+        } else {
+            insignia.className = "badge bg-secondary";
+            insignia.textContent = "Inactivo";
+        }
+
+        celdaEstado.appendChild(insignia);
+
+        // Acciones: solo para guardias activos.
+        const celdaAcciones = document.createElement("td");
+        celdaAcciones.className = "text-end";
+
+        if (Number(guardia.estado) === 1) {
+            const botonEditar = document.createElement("button");
+
+            botonEditar.type = "button";
+            botonEditar.className =
+                "btn btn-sm btn-outline-primary me-2";
+            botonEditar.textContent = "Editar";
+            botonEditar.dataset.accion = "editar";
+            botonEditar.dataset.id = guardia.id_guardia;
+
+            const botonDesactivar = document.createElement("button");
+
+            botonDesactivar.type = "button";
+            botonDesactivar.className =
+                "btn btn-sm btn-outline-danger";
+            botonDesactivar.textContent = "Eliminar";
+            botonDesactivar.dataset.accion = "desactivar";
+            botonDesactivar.dataset.id = guardia.id_guardia;
+            botonDesactivar.dataset.nombre = guardia.nombre;
+
+            botonEditar.addEventListener("click", () => {
+                abrirModalEditarGuardia(guardia);
+            });
+
+            botonDesactivar.addEventListener("click", () => {
+                desactivarGuardia(
+                    guardia.id_guardia,
+                    guardia.nombre
+                );
+            });
+
+            celdaAcciones.append(botonEditar, botonDesactivar);
+        } else {
+            celdaAcciones.textContent = "Sin acciones";
+        }
+
+        fila.append(
+            celdaId,
+            celdaNombre,
+            celdaTelefono,
+            celdaAcceso,
+            celdaEstado,
+            celdaAcciones
+        );
+
+        tablaGuardias.appendChild(fila);
+    });
+
+    infoPaginacionGuardias.textContent =
+        `Mostrando ${inicio + 1}–${fin} de ${totalRegistros} registros`;
+
+    renderizarPaginacionGuardias(totalPaginas);
+}
+
+// paginación
+function renderizarPaginacionGuardias(totalPaginas) {
+    paginacionGuardias.innerHTML = "";
+
+    function crearBoton(texto, pagina, deshabilitado = false, activo = false) {
+        const elemento = document.createElement("li");
+        elemento.className = "page-item";
+
+        if (deshabilitado) {
+            elemento.classList.add("disabled");
+        }
+
+        if (activo) {
+            elemento.classList.add("active");
+        }
+
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "page-link";
+        boton.textContent = texto;
+        boton.disabled = deshabilitado;
+
+        if (activo) {
+            boton.setAttribute("aria-current", "page");
+        }
+
+        boton.addEventListener("click", () => {
+            paginaActualGuardias = pagina;
+            renderizarGuardias();
+        });
+
+        elemento.appendChild(boton);
+        paginacionGuardias.appendChild(elemento);
+    }
+
+    crearBoton(
+        "Anterior",
+        paginaActualGuardias - 1,
+        paginaActualGuardias === 1
+    );
+
+    let inicio = Math.max(1, paginaActualGuardias - 2);
+    let fin = Math.min(totalPaginas, inicio + 4);
+
+    inicio = Math.max(1, fin - 4);
+
+    for (let pagina = inicio; pagina <= fin; pagina++) {
+        crearBoton(
+            String(pagina),
+            pagina,
+            false,
+            pagina === paginaActualGuardias
+        );
+    }
+
+    crearBoton(
+        "Siguiente",
+        paginaActualGuardias + 1,
+        paginaActualGuardias === totalPaginas
+    );
+}
+
+// eventos
+buscarGuardias.addEventListener("input", () => {
+    textoBusquedaGuardias = buscarGuardias.value.trim();
+    paginaActualGuardias = 1;
+
+    renderizarGuardias();
+});
+
+registrosPorPaginaGuardias.addEventListener("change", () => {
+    limiteGuardias = Number(registrosPorPaginaGuardias.value);
+    paginaActualGuardias = 1;
+
+    renderizarGuardias();
+});
+
+
 
 // Abrir formulario para registrar un guardia
 btnNuevoGuardia.addEventListener("click", async () => {

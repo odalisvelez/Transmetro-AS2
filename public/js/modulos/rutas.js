@@ -1,15 +1,9 @@
 
-// ============================================
-// API
-// ============================================
-
 const API_RUTAS = "detalle_ruta.php";
 const API_LINEAS_RUTAS = "lineas.php";
 const API_ESTACIONES_RUTAS = "estaciones.php";
 
-// ============================================
 // ELEMENTOS HTML
-// ============================================
 
 const seleccionLinea = document.getElementById("seleccionLinea");
 const seleccionEstacion = document.getElementById("seleccionEstacion");
@@ -27,17 +21,12 @@ const panelAgregarEstacion = document.getElementById("panelAgregarEstacion");
 const distanciaTotal = document.getElementById("distanciaTotal");
 const estadoDistancia = document.getElementById("estadoDistancia");
 
-// ============================================
 // ESTADO DEL MÓDULO
-// ============================================
-
 let lineasActivas = [];
 let estacionesActivas = [];
 let rutaActual = [];
 
-// ============================================
 // CARGAR LÍNEAS ACTIVAS
-// ============================================
 
 async function cargarLineasRuta() {
 
@@ -89,17 +78,10 @@ async function cargarLineasRuta() {
     }
 }
 
-// ============================================
 // INICIAR MÓDULO
-// ============================================
-
 cargarLineasRuta();
 
-
-// ============================================
 // CARGAR RECORRIDO DE LA LÍNEA SELECCIONADA
-// ============================================
-
 async function cargarRutaActual() {
 
     const idLinea = seleccionLinea.value;
@@ -160,86 +142,6 @@ async function cargarRutaActual() {
         contadorEstaciones.textContent = "Error";
     }
 }
-
-// ============================================
-// MOSTRAR ESTACIONES DEL RECORRIDO
-// ============================================
-
-/*
-function mostrarRutaActual() {
-    tablaRuta.innerHTML = "";
-    contadorEstaciones.textContent = `${rutaActual.length} estaciones`;
-
-    if (rutaActual.length === 0) {
-        tablaRuta.innerHTML = `
-            <tr>
-                <td colspan="4" class="text-center">
-                    Esta línea todavía no tiene estaciones asociadas.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    calcularDistanciaTotal();
-
-    rutaActual.forEach(detalle => {
-        const fila = document.createElement("tr");
-
-        // Orden
-        const celdaOrden = document.createElement("td");
-        celdaOrden.textContent = detalle.orden;
-
-        // Estación
-        const celdaEstacion = document.createElement("td");
-        celdaEstacion.textContent = detalle.estacion;
-
-        // Distancia a la siguiente estación
-        const celdaDistancia = document.createElement("td");
-
-        if (
-            detalle.distancia_a_siguiente === null ||
-            detalle.distancia_a_siguiente === ""
-        ) {
-            celdaDistancia.textContent = "No definida";
-        } else {
-            celdaDistancia.textContent =
-                `${detalle.distancia_a_siguiente} km`;
-        }
-
-        // Acciones
-        const celdaAcciones = document.createElement("td");
-        celdaAcciones.className = "text-end";
-
-        const botonEditar = document.createElement("button");
-        botonEditar.type = "button";
-        botonEditar.className =
-            "btn btn-sm btn-outline-primary me-2";
-        botonEditar.textContent = "Editar";
-        botonEditar.dataset.accion = "editar";
-        botonEditar.dataset.idEstacion = detalle.id_estacion;
-
-        const botonQuitar = document.createElement("button");
-        botonQuitar.type = "button";
-        botonQuitar.className =
-            "btn btn-sm btn-outline-danger";
-        botonQuitar.textContent = "Quitar";
-        botonQuitar.dataset.accion = "quitar";
-        botonQuitar.dataset.idEstacion = detalle.id_estacion;
-
-        celdaAcciones.append(botonEditar, botonQuitar);
-
-        fila.append(
-            celdaOrden,
-            celdaEstacion,
-            celdaDistancia,
-            celdaAcciones
-        );
-
-        tablaRuta.appendChild(fila);
-    });
-} */
-
     
 function mostrarRutaActual() {
     tablaRuta.innerHTML = "";
@@ -313,19 +215,13 @@ function mostrarRutaActual() {
 
     calcularDistanciaTotal();
 }
-// ============================================
 // EVENTOS
-// ============================================
-
 seleccionLinea.addEventListener("change", cargarRutaActual);
 
 botonRecargarRuta.addEventListener("click", cargarRutaActual);
 
 
-/* =========================================
-   CARGAR ESTACIONES DISPONIBLES
-========================================= */
-
+//CARGAR ESTACIONES DISPONIBLES
 async function cargarEstacionesDisponibles() {
     const idLinea = seleccionLinea.value;
 
@@ -385,10 +281,7 @@ async function cargarEstacionesDisponibles() {
     }
 }
 
-
-/* =========================================
-   MOSTRAR PANEL PARA AGREGAR ESTACIÓN
-========================================= */
+//MOSTRAR PANEL PARA AGREGAR ESTACIÓN
 
 botonAgregarEstacion.addEventListener("click", async () => {
     panelAgregarEstacion.hidden = false;
@@ -396,10 +289,7 @@ botonAgregarEstacion.addEventListener("click", async () => {
     await cargarEstacionesDisponibles();
 });
 
-
-/* =========================================
-   AGREGAR ESTACIÓN AL RECORRIDO
-========================================= */
+//AGREGAR ESTACIÓN AL RECORRIDO
 
 botonConfirmarAgregar.addEventListener("click", async () => {
     const idLinea = seleccionLinea.value;
@@ -455,11 +345,7 @@ botonConfirmarAgregar.addEventListener("click", async () => {
     }
 });
 
-
-/* =========================================
-   EDITAR ORDEN Y DISTANCIA
-========================================= */
-
+//EDITAR ORDEN Y DISTANCIA
 
 tablaRuta.addEventListener("click", (evento) => {
     const boton = evento.target.closest("button[data-accion]");
@@ -523,11 +409,7 @@ tablaRuta.addEventListener("click", (evento) => {
 });
 
 
-/* =========================================
-   GUARDAR O CANCELAR EDICIÓN
-========================================= */
-
-
+//GUARDAR O CANCELAR EDICIO
 tablaRuta.addEventListener("click", async (evento) => {
     const boton = evento.target.closest("button[data-accion]");
 
@@ -760,7 +642,7 @@ tablaRuta.addEventListener("click", async (evento) => {
 /* =========================================
    CALCULAR DISTANCIA TOTAL DE LA LÍNEA
 ========================================= */
-
+/*
 function calcularDistanciaTotal() {
     if (!seleccionLinea.value) {
         distanciaTotal.textContent = "-- km";
@@ -822,6 +704,57 @@ function calcularDistanciaTotal() {
         estadoDistancia.textContent = "Distancia completa";
         estadoDistancia.className = "badge text-bg-success";
     }
+} */
+
+function calcularDistanciaTotal() {
+    if (!seleccionLinea.value) {
+        distanciaTotal.textContent = "-- km";
+        estadoDistancia.textContent = "Selecciona una línea";
+        estadoDistancia.className = "badge text-bg-secondary";
+        return;
+    }
+
+    if (rutaActual.length === 0) {
+        distanciaTotal.textContent = "-- km";
+        estadoDistancia.textContent = "Sin estaciones";
+        estadoDistancia.className = "badge text-bg-secondary";
+        return;
+    }
+
+    // Una estación también puede tener un tramo:
+    // el regreso a esa misma estación, si el sistema lo permite.
+    const distancias = rutaActual.map(detalle => {
+        const valor = detalle.distancia_a_siguiente;
+
+        if (valor === null || valor === "") {
+            return null;
+        }
+
+        const numero = Number(valor);
+
+        return Number.isFinite(numero) && numero >= 0
+            ? numero
+            : null;
+    });
+
+    const hayDistanciasPendientes = distancias.some(
+        distancia => distancia === null
+    );
+
+    const total = distancias.reduce(
+        (suma, distancia) => suma + (distancia ?? 0),
+        0
+    );
+
+    distanciaTotal.textContent = `${total.toFixed(2)} km`;
+
+    if (hayDistanciasPendientes) {
+        estadoDistancia.textContent =
+            "Distancia parcial: hay tramos pendientes";
+
+        estadoDistancia.className = "badge text-bg-warning";
+    } else {
+        estadoDistancia.textContent = "Distancia completa";
+        estadoDistancia.className = "badge text-bg-success";
+    }
 }
-
-

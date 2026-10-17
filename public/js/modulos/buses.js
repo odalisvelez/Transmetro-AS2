@@ -3,6 +3,7 @@ const API_LINEAS_BUSES = "lineas.php";
 const API_PARQUEOS_BUSES = "parqueos.php";
 const API_PILOTOS_BUSES = "pilotos.php";
 
+// html
 const tablaBuses = document.getElementById("tablaBuses");
 const formularioBus = document.getElementById("formularioBus");
 const modalBusElemento = document.getElementById("modalBus");
@@ -10,12 +11,20 @@ const modalBusElemento = document.getElementById("modalBus");
 const modalBus = new bootstrap.Modal(modalBusElemento);
 
 const mensajeBuses = document.getElementById("mensajeBuses");
-const mensajeFormularioBus = document.getElementById(
-    "mensajeFormularioBus"
-);
+const mensajeFormularioBus = document.getElementById("mensajeFormularioBus");
 
 const btnNuevoBus = document.getElementById("btnNuevoBus");
 const btnGuardarBus = document.getElementById("btnGuardarBus");
+
+// para paginacion y busqueda
+const buscarBuses = document.getElementById("buscarBuses");
+const registrosPorPaginaBuses = document.getElementById("registrosPorPaginaBuses");
+const infoPaginacionBuses = document.getElementById("infoPaginacionBuses");
+const paginacionBuses = document.getElementById("paginacionBuses");
+
+let paginaActualBuses = 1;
+let textoBusquedaBuses = "";
+let limiteBuses = 10;
 
 let busesActuales = [];
 let lineasActivas = [];
@@ -127,6 +136,7 @@ function llenarSelect(
 // CONSULTAR BUSES
 // --------------------------------------------------
 
+
 async function cargarBuses() {
     tablaBuses.innerHTML = `
         <tr>
@@ -140,6 +150,8 @@ async function cargarBuses() {
         const buses = await solicitarAPI(API_BUSES);
 
         busesActuales = buses;
+        paginaActualBuses = 1;
+
         mostrarBuses();
 
         ocultarMensaje(mensajeBuses);
@@ -155,29 +167,75 @@ async function cargarBuses() {
             </tr>
         `;
 
+        infoPaginacionBuses.textContent =
+            "No se pudieron cargar los registros.";
+
+        paginacionBuses.replaceChildren();
+
         mostrarMensaje(mensajeBuses, error.message);
     }
 }
 
 // --------------------------------------------------
-// MOSTRAR TABLA
+// MOSTRAR TABLA CON BÚSQUEDA Y PAGINACIÓN
 // --------------------------------------------------
 
 function mostrarBuses() {
     tablaBuses.replaceChildren();
 
-    if (busesActuales.length === 0) {
+    const texto = textoBusquedaBuses.trim().toLowerCase();
+
+    const busesFiltrados = busesActuales.filter(bus => {
+        const valores = [
+            bus.id_bus,
+            bus.placa,
+            bus.capacidad_maxima,
+            bus.linea ?? "Sin asignar",
+            bus.parqueo ?? "Sin asignar",
+            bus.piloto ?? "Sin asignar",
+            Number(bus.estado) === 1 ? "Activo" : "Desactivado"
+        ];
+
+        return valores.some(valor =>
+            String(valor).toLowerCase().includes(texto)
+        );
+    });
+
+    const totalRegistros = busesFiltrados.length;
+    const totalPaginas = Math.ceil(totalRegistros / limiteBuses);
+
+    // Si la búsqueda no encuentra resultados
+    if (totalRegistros === 0) {
         tablaBuses.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center text-muted">
-                    No hay buses registrados.
+                    ${
+                        texto
+                            ? "No se encontraron buses con esa búsqueda."
+                            : "No hay buses registrados."
+                    }
                 </td>
             </tr>
         `;
+
+        infoPaginacionBuses.textContent =
+            "Mostrando 0 registros.";
+
+        renderizarPaginacionBuses(0);
         return;
     }
 
-    busesActuales.forEach(bus => {
+    // Evitar permanecer en una página que ya no existe
+    if (paginaActualBuses > totalPaginas) {
+        paginaActualBuses = totalPaginas;
+    }
+
+    const inicio = (paginaActualBuses - 1) * limiteBuses;
+    const fin = Math.min(inicio + limiteBuses, totalRegistros);
+
+    const busesPagina = busesFiltrados.slice(inicio, fin);
+
+    busesPagina.forEach(bus => {
         const fila = document.createElement("tr");
         const activo = Number(bus.estado) === 1;
 
@@ -196,6 +254,7 @@ function mostrarBuses() {
             fila.appendChild(celda);
         });
 
+        // Estado
         const celdaEstado = document.createElement("td");
         const insignia = document.createElement("span");
 
@@ -208,24 +267,28 @@ function mostrarBuses() {
         celdaEstado.appendChild(insignia);
         fila.appendChild(celdaEstado);
 
+        // Acciones
         const celdaAcciones = document.createElement("td");
         celdaAcciones.className = "text-center";
 
         const btnEditar = document.createElement("button");
         btnEditar.type = "button";
-        btnEditar.className = "btn btn-sm btn-outline-primary me-1";
+        btnEditar.className =
+            "btn btn-sm btn-outline-primary me-1";
         btnEditar.textContent = "Editar";
         btnEditar.disabled = !activo;
-        btnEditar.addEventListener("click", () => abrirEdicionBus(bus));
+        btnEditar.addEventListener("click", () =>
+            abrirEdicionBus(bus)
+        );
 
         const btnDesactivar = document.createElement("button");
         btnDesactivar.type = "button";
-        btnDesactivar.className = "btn btn-sm btn-outline-danger";
+        btnDesactivar.className =
+            "btn btn-sm btn-outline-danger";
         btnDesactivar.textContent = "Eliminar";
         btnDesactivar.disabled = !activo;
-        btnDesactivar.addEventListener(
-            "click",
-            () => desactivarBus(bus)
+        btnDesactivar.addEventListener("click", () =>
+            desactivarBus(bus)
         );
 
         celdaAcciones.append(btnEditar, btnDesactivar);
@@ -233,7 +296,80 @@ function mostrarBuses() {
 
         tablaBuses.appendChild(fila);
     });
+
+    // Información de registros mostrados
+    infoPaginacionBuses.textContent =
+        `Mostrando ${inicio + 1} a ${fin} de ${totalRegistros} registros.`;
+
+    renderizarPaginacionBuses(totalPaginas);
 }
+// paginacion
+
+function renderizarPaginacionBuses(totalPaginas) {
+    paginacionBuses.replaceChildren();
+
+    if (totalPaginas <= 1) {
+        return;
+    }
+
+    function agregarBoton(texto, pagina, deshabilitado = false, activo = false) {
+        const elemento = document.createElement("li");
+        elemento.className = `page-item${deshabilitado ? " disabled" : ""}${activo ? " active" : ""}`;
+
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "page-link";
+        boton.textContent = texto;
+        boton.disabled = deshabilitado;
+        boton.setAttribute("aria-label", texto);
+
+        boton.addEventListener("click", () => {
+            paginaActualBuses = pagina;
+            mostrarBuses();
+        });
+
+        elemento.appendChild(boton);
+        paginacionBuses.appendChild(elemento);
+    }
+
+    agregarBoton(
+        "Anterior",
+        paginaActualBuses - 1,
+        paginaActualBuses === 1
+    );
+
+    const inicioPaginas = Math.max(1, paginaActualBuses - 2);
+    const finPaginas = Math.min(totalPaginas, inicioPaginas + 4);
+    const inicioAjustado = Math.max(1, finPaginas - 4);
+
+    for (let pagina = inicioAjustado; pagina <= finPaginas; pagina++) {
+        agregarBoton(
+            String(pagina),
+            pagina,
+            false,
+            pagina === paginaActualBuses
+        );
+    }
+
+    agregarBoton(
+        "Siguiente",
+        paginaActualBuses + 1,
+        paginaActualBuses === totalPaginas
+    );
+}
+// botones
+
+buscarBuses.addEventListener("input", () => {
+    textoBusquedaBuses = buscarBuses.value;
+    paginaActualBuses = 1;
+    mostrarBuses();
+});
+
+registrosPorPaginaBuses.addEventListener("change", () => {
+    limiteBuses = Number(registrosPorPaginaBuses.value);
+    paginaActualBuses = 1;
+    mostrarBuses();
+});
 
 // --------------------------------------------------
 // NUEVO BUS

@@ -3,33 +3,26 @@
 const API_MUNICIPALIDADES = "municipalidades.php";
 
 // Referencias a los elementos HTML
-const tablaMunicipalidades = document.getElementById(
-    "tablaMunicipalidades"
-);
+const tablaMunicipalidades = document.getElementById("tablaMunicipalidades");
+const botonNuevaMunicipalidad = document.getElementById("btnNuevaMunicipalidad");
+const elementoModalMunicipalidad = document.getElementById("modalMunicipalidad");
+const formularioMunicipalidad = document.getElementById("formMunicipalidad");
+const campoNombreMunicipalidad = document.getElementById("nombreMunicipalidad");
+const tituloModalMunicipalidad = document.getElementById("tituloModalMunicipalidad");
+const modalMunicipalidad = new bootstrap.Modal(elementoModalMunicipalidad);
 
-const botonNuevaMunicipalidad = document.getElementById(
-    "btnNuevaMunicipalidad"
-);
 
-const elementoModalMunicipalidad = document.getElementById(
-    "modalMunicipalidad"
-);
+const buscarMunicipalidades =document.getElementById("buscarMunicipalidades");
+const registrosPorPaginaMunicipalidades =document.getElementById("registrosPorPaginaMunicipalidades");
+const infoPaginacionMunicipalidades =document.getElementById("infoPaginacionMunicipalidades");
+const paginacionMunicipalidades =document.getElementById("paginacionMunicipalidades");
 
-const formularioMunicipalidad = document.getElementById(
-    "formMunicipalidad"
-);
+// Datos y estado de la tabla
+let listaMunicipalidades = [];
+let paginaActualMunicipalidades = 1;
+let textoBusquedaMunicipalidades = "";
+let limiteMunicipalidades = 10;
 
-const campoNombreMunicipalidad = document.getElementById(
-    "nombreMunicipalidad"
-);
-
-const tituloModalMunicipalidad = document.getElementById(
-    "tituloModalMunicipalidad"
-);
-
-const modalMunicipalidad = new bootstrap.Modal(
-    elementoModalMunicipalidad
-);
 
 // Guarda el ID cuando estamos editando.
 // Si es null, estamos registrando una municipalidad.
@@ -39,6 +32,7 @@ let idMunicipalidadEditar = null;
 // =====================================
 // 1. CONSULTAR Y MOSTRAR MUNICIPALIDADES
 // =====================================
+
 
 async function cargarMunicipalidades() {
     tablaMunicipalidades.innerHTML = `
@@ -54,54 +48,13 @@ async function cargarMunicipalidades() {
             API_MUNICIPALIDADES
         );
 
-        tablaMunicipalidades.innerHTML = "";
+        listaMunicipalidades = Array.isArray(municipalidades)
+            ? municipalidades
+            : [];
 
-        if (municipalidades.length === 0) {
-            tablaMunicipalidades.innerHTML = `
-                <tr>
-                    <td colspan="3" class="text-center">
-                        No hay municipalidades registradas.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
+        paginaActualMunicipalidades = 1;
 
-        municipalidades.forEach((municipalidad) => {
-            const fila = document.createElement("tr");
-
-            const celdaId = document.createElement("td");
-            celdaId.textContent = municipalidad.id_municipalidad;
-
-            const celdaNombre = document.createElement("td");
-            celdaNombre.textContent = municipalidad.nombre;
-
-            const celdaAcciones = document.createElement("td");
-            celdaAcciones.className = "text-center";
-
-            const botonEditar = document.createElement("button");
-            botonEditar.type = "button";
-            botonEditar.className =
-                "btn btn-sm btn-outline-primary me-2";
-            botonEditar.textContent = "Editar";
-            botonEditar.dataset.accion = "editar";
-            botonEditar.dataset.id = municipalidad.id_municipalidad;
-            botonEditar.dataset.nombre = municipalidad.nombre;
-
-            const botonEliminar = document.createElement("button");
-            botonEliminar.type = "button";
-            botonEliminar.className =
-                "btn btn-sm btn-outline-danger";
-            botonEliminar.textContent = "Eliminar";
-            botonEliminar.dataset.accion = "eliminar";
-            botonEliminar.dataset.id = municipalidad.id_municipalidad;
-            botonEliminar.dataset.nombre = municipalidad.nombre;
-
-            celdaAcciones.append(botonEditar, botonEliminar);
-            fila.append(celdaId, celdaNombre, celdaAcciones);
-
-            tablaMunicipalidades.appendChild(fila);
-        });
+        renderizarMunicipalidades();
 
     } catch (error) {
         console.error("Error al cargar municipalidades:", error);
@@ -113,8 +66,204 @@ async function cargarMunicipalidades() {
                 </td>
             </tr>
         `;
+
+        infoPaginacionMunicipalidades.textContent =
+            "No se pudieron cargar los registros.";
+
+        paginacionMunicipalidades.innerHTML = "";
     }
 }
+
+// renderizara
+function renderizarMunicipalidades() {
+    const texto = textoBusquedaMunicipalidades.toLocaleLowerCase();
+
+    const municipalidadesFiltradas = listaMunicipalidades.filter(
+        municipalidad => {
+            return (
+                String(municipalidad.id_municipalidad)
+                    .toLocaleLowerCase()
+                    .includes(texto) ||
+                String(municipalidad.nombre ?? "")
+                    .toLocaleLowerCase()
+                    .includes(texto)
+            );
+        }
+    );
+
+    const totalRegistros = municipalidadesFiltradas.length;
+
+    const totalPaginas = Math.max(
+        1,
+        Math.ceil(totalRegistros / limiteMunicipalidades)
+    );
+
+    if (paginaActualMunicipalidades > totalPaginas) {
+        paginaActualMunicipalidades = totalPaginas;
+    }
+
+    tablaMunicipalidades.innerHTML = "";
+
+    if (totalRegistros === 0) {
+        const fila = document.createElement("tr");
+        const celda = document.createElement("td");
+
+        celda.colSpan = 3;
+        celda.className = "text-center";
+
+        celda.textContent = listaMunicipalidades.length === 0
+            ? "No hay municipalidades registradas."
+            : "No se encontraron municipalidades con esa búsqueda.";
+
+        fila.appendChild(celda);
+        tablaMunicipalidades.appendChild(fila);
+
+        infoPaginacionMunicipalidades.textContent =
+            "Mostrando 0 de 0 registros";
+
+        paginacionMunicipalidades.innerHTML = "";
+        return;
+    }
+
+    const inicio =
+        (paginaActualMunicipalidades - 1) * limiteMunicipalidades;
+
+    const fin = Math.min(
+        inicio + limiteMunicipalidades,
+        totalRegistros
+    );
+
+    const municipalidadesPagina = municipalidadesFiltradas.slice(
+        inicio,
+        fin
+    );
+
+    municipalidadesPagina.forEach(municipalidad => {
+        const fila = document.createElement("tr");
+
+        const celdaId = document.createElement("td");
+        celdaId.textContent = municipalidad.id_municipalidad;
+
+        const celdaNombre = document.createElement("td");
+        celdaNombre.textContent = municipalidad.nombre;
+
+        const celdaAcciones = document.createElement("td");
+        celdaAcciones.className = "text-center";
+
+        const botonEditar = document.createElement("button");
+        botonEditar.type = "button";
+        botonEditar.className =
+            "btn btn-sm btn-outline-primary me-2";
+        botonEditar.textContent = "Editar";
+        botonEditar.dataset.accion = "editar";
+        botonEditar.dataset.id = municipalidad.id_municipalidad;
+        botonEditar.dataset.nombre = municipalidad.nombre;
+
+        const botonEliminar = document.createElement("button");
+        botonEliminar.type = "button";
+        botonEliminar.className =
+            "btn btn-sm btn-outline-danger";
+        botonEliminar.textContent = "Eliminar";
+        botonEliminar.dataset.accion = "eliminar";
+        botonEliminar.dataset.id = municipalidad.id_municipalidad;
+        botonEliminar.dataset.nombre = municipalidad.nombre;
+
+        celdaAcciones.append(botonEditar, botonEliminar);
+
+        fila.append(celdaId, celdaNombre, celdaAcciones);
+
+        tablaMunicipalidades.appendChild(fila);
+    });
+
+    infoPaginacionMunicipalidades.textContent =
+        `Mostrando ${inicio + 1}–${fin} de ${totalRegistros} registros`;
+
+    renderizarPaginacionMunicipalidades(totalPaginas);
+}
+// paginacion
+function renderizarPaginacionMunicipalidades(totalPaginas) {
+    paginacionMunicipalidades.innerHTML = "";
+
+    function crearBoton(
+        texto,
+        pagina,
+        deshabilitado = false,
+        activo = false
+    ) {
+        const elemento = document.createElement("li");
+        elemento.className = "page-item";
+
+        if (deshabilitado) {
+            elemento.classList.add("disabled");
+        }
+
+        if (activo) {
+            elemento.classList.add("active");
+        }
+
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "page-link";
+        boton.textContent = texto;
+        boton.disabled = deshabilitado;
+
+        if (activo) {
+            boton.setAttribute("aria-current", "page");
+        }
+
+        boton.addEventListener("click", () => {
+            paginaActualMunicipalidades = pagina;
+            renderizarMunicipalidades();
+        });
+
+        elemento.appendChild(boton);
+        paginacionMunicipalidades.appendChild(elemento);
+    }
+
+    crearBoton(
+        "Anterior",
+        paginaActualMunicipalidades - 1,
+        paginaActualMunicipalidades === 1
+    );
+
+    let inicio = Math.max(1, paginaActualMunicipalidades - 2);
+    let fin = Math.min(totalPaginas, inicio + 4);
+
+    inicio = Math.max(1, fin - 4);
+
+    for (let pagina = inicio; pagina <= fin; pagina++) {
+        crearBoton(
+            String(pagina),
+            pagina,
+            false,
+            pagina === paginaActualMunicipalidades
+        );
+    }
+
+    crearBoton(
+        "Siguiente",
+        paginaActualMunicipalidades + 1,
+        paginaActualMunicipalidades === totalPaginas
+    );
+}
+// controloes
+
+buscarMunicipalidades.addEventListener("input", () => {
+    textoBusquedaMunicipalidades = buscarMunicipalidades.value.trim();
+    paginaActualMunicipalidades = 1;
+
+    renderizarMunicipalidades();
+});
+
+registrosPorPaginaMunicipalidades.addEventListener("change", () => {
+    limiteMunicipalidades = Number(
+        registrosPorPaginaMunicipalidades.value
+    );
+
+    paginaActualMunicipalidades = 1;
+
+    renderizarMunicipalidades();
+});
 
 
 // =====================================

@@ -59,11 +59,26 @@ if ($metodo === "GET"){
         $estado = $datos["estado"] ?? null;
 
         // Validar identificador y estado solicitado
+        // Estados permitidos para una alerta
+        $estadosPermitidos = [
+            "Pendiente",
+            "En proceso",
+            "Atendida"
+        ];
+
+        // Validar identificador y estado solicitado
         if (
             !$idAlerta ||
             $idAlerta <= 0 ||
+            !in_array($estado, $estadosPermitidos, true)
+        )
+        /*if (
+            !$idAlerta ||
+            $idAlerta <= 0 ||
             $estado !== "Atendida"
-        ) {
+        ) */
+        
+        {
             http_response_code(400);
 
             echo json_encode([
@@ -73,13 +88,22 @@ if ($metodo === "GET"){
         } else {
 
             // Actualizar únicamente alertas que estén activas
-            $sql = "UPDATE alerta
+            /*$sql = "UPDATE alerta
                     SET estado = 'Atendida'
                     WHERE id_alerta = ?
                     AND estado = 'Activa'";
 
             $stmt = $conexion->prepare($sql);
-            $stmt->bind_param("i", $idAlerta);
+            $stmt->bind_param("i", $idAlerta); */
+            // Actualizar alertas que todavía no estén atendidas
+            $sql = "UPDATE alerta
+                    SET estado = ?
+                    WHERE id_alerta = ?
+                    AND estado IN ('Pendiente', 'En proceso')";
+
+            $stmt = $conexion->prepare($sql);
+            $stmt->bind_param("si", $estado, $idAlerta);
+
             $stmt->execute();
 
             if ($stmt->affected_rows > 0) {
@@ -87,9 +111,12 @@ if ($metodo === "GET"){
                 http_response_code(200);
 
                 echo json_encode([
-                    "mensaje" => "Alerta marcada como atendida.",
+                    "mensaje" => "Estado de la alerta actualizado correctamente.",
                     "id_alerta" => $idAlerta,
-                    "estado" => "Atendida"
+                    "estado" => $estado    
+                /*"mensaje" => "Alerta marcada como atendida.",
+                    "id_alerta" => $idAlerta,
+                    "estado" => "Atendida"*/
                 ], JSON_UNESCAPED_UNICODE);
 
             } else {
@@ -115,11 +142,12 @@ if ($metodo === "GET"){
                     ], JSON_UNESCAPED_UNICODE);
 
                 } else {
-
                     http_response_code(409);
 
                     echo json_encode([
-                        "error" => "La alerta no está activa; no se puede marcar como atendida nuevamente.",
+                        "error" => $alerta["estado"] === "Atendida"
+                            ? "La alerta ya fue atendida y no puede modificarse."
+                            : "No se pudo actualizar el estado de la alerta.",
                         "estado_actual" => $alerta["estado"]
                     ], JSON_UNESCAPED_UNICODE);
                 }

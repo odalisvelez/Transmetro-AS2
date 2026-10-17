@@ -13,7 +13,7 @@ if ($metodo === "GET") {
 
     $sql = "SELECT
                 he.id_historial,
-                he.institucion AS Institucion_Educativa,
+                he.institucion,
                 he.titulo,
                 he.fecha_inicio,
                 he.fecha_fin,

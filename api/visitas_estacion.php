@@ -220,7 +220,7 @@ if ($metodo === "GET") {
                                              WHERE id_estacion = ?
                                                AND id_linea = ?
                                                AND tipo_alerta = ?
-                                               AND estado = 'Activa'
+                                               AND estado IN ('Pendiente', 'En proceso')
                                              LIMIT 1";
 
                             $stmtDuplicada = $conexion->prepare(
@@ -246,7 +246,7 @@ if ($metodo === "GET") {
 
                             if (!$alertaExistente) {
 
-                                $estadoAlerta = "Activa";
+                                $estadoAlerta =  "Pendiente";
 
                                 $sqlAlerta = "INSERT INTO alerta
                                               (id_estacion, id_linea,
@@ -297,11 +297,17 @@ if ($metodo === "GET") {
                                 "alerta_generada" => $alertaGenerada,
                                 "id_alerta" => $idAlerta
                             ],
+                            
+                            // ajustamos mensaje
                             "rn15" => [
                                 "condicion_cumplida" => $esperaAdicional === 5,
                                 "espera_adicional_minutos" => $esperaAdicional,
-                                "criterio" => "Indicador simplificado basado en pasajeros esperando; no representa la ocupación real del bus."
+                                "mensaje" => $esperaAdicional === 5
+                                    ? "Demanda baja: se deben añadir 5 minutos de espera."
+                                    : "No corresponde tiempo de espera adicional.",
+                                "criterio" => "La regla se evalúa comparando los pasajeros esperando en la estación con el 25 % de la capacidad máxima del bus."
                             ]
+
                         ], JSON_UNESCAPED_UNICODE);
 
                     } catch (Throwable $e) {

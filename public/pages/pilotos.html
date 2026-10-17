@@ -36,7 +36,7 @@
             <div id="contenedorEncabezado"></div>
 
             <!-- Contenido del módulo -->
-              <section class="content-section">
+            <section class="content-section">
 
                 <div class="section-header">
                     <div>
@@ -55,6 +55,33 @@
                 <!-- Tabla de pilotos -->
                 <div class="module-card">
 
+                    <!-- Búsqueda y cantidad de registros -->
+                    <div class="row g-3 align-items-center mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="buscarPilotos" class="form-label">
+                                Buscar piloto
+                            </label>
+                            <input
+                                type="search"
+                                class="form-control"
+                                id="buscarPilotos"
+                                placeholder="Buscar por nombre o ID..."
+                            >
+                        </div>
+
+                        <div class="col-12 col-md-3">
+                            <label for="registrosPorPaginaPilotos" class="form-label">
+                                Registros por página
+                            </label>
+                            <select class="form-select" id="registrosPorPaginaPilotos">
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
                             <thead>
@@ -71,12 +98,33 @@
 
                             <tbody id="tablaPilotos">
                                 <tr>
-                                    <td colspan="3" class="text-center">
-                                        Cargando municipalidades...
+                                    <td colspan="7" class="text-center">
+                                        Cargando pilotos...
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Información y navegación de páginas -->
+                    <div class="d-flex flex-column flex-md-row
+                                justify-content-between align-items-center gap-3 mt-3">
+
+                        <p
+                            id="infoPaginacionPilotos"
+                            class="mb-0 text-muted"
+                            aria-live="polite"
+                        >
+                            Mostrando registros...
+                        </p>
+
+                        <nav aria-label="Paginación de pilotos">
+                            <ul
+                                class="pagination pagination-sm mb-0"
+                                id="paginacionPilotos"
+                            ></ul>
+                        </nav>
+
                     </div>
 
                 </div>
@@ -86,62 +134,61 @@
         </main>
 
     </div>
+   
+    <!-- Modal: Nuevo Piloto -->
+    <div class="modal fade" id="modalPiloto" tabindex="-1" aria-labelledby="tituloModalPiloto" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
 
-    
-<!-- Modal: Nuevo Piloto -->
-<div class="modal fade" id="modalPiloto" tabindex="-1" aria-labelledby="tituloModalPiloto" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloModalPiloto">
+                        Nuevo piloto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
 
-            <div class="modal-header">
-                <h5 class="modal-title" id="tituloModalPiloto">
-                    Nuevo piloto
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <form id="formPiloto">
+                    <div class="modal-body">
+                        
+                        <!-- Nombre -->
+                        <div class="mb-3">
+                            <label for="nombrePiloto" class="form-label">Nombre del Piloto</label>
+                            <input type="text" class="form-control" id="nombrePiloto" name="nombre" maxlength="150" placeholder="Ej. Juan Carlos" required>
+                        </div>
+
+                        <!-- Dirección -->
+                        <div class="mb-3">
+                            <label for="direccionPiloto" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccionPiloto" name="direccion"  maxlength="200" placeholder="Ej. Zona 1, Ciudad" required>
+                        </div>
+
+                        <!-- Teléfono -->
+                        <div class="mb-3">
+                            <label for="telefonoPiloto" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="telefonoPiloto" name="telefono" maxlength="20" placeholder="Ej. 5555-5555" required>
+                        </div>
+
+                        <!-- Correo -->
+                        <div class="mb-3">
+                            <label for="correoPiloto" class="form-label">Correo electrónico</label>
+                            <input type="email" class="form-control" id="correoPiloto" name="correo" maxlength="100" placeholder="Ej. juan@email.com">
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            Guardar piloto
+                        </button>
+                    </div>
+                </form>
+
             </div>
-
-            <form id="formPiloto">
-                <div class="modal-body">
-                    
-                    <!-- Nombre -->
-                    <div class="mb-3">
-                        <label for="nombrePiloto" class="form-label">Nombre del Piloto</label>
-                        <input type="text" class="form-control" id="nombrePiloto" name="nombre" maxlength="150" placeholder="Ej. Juan Carlos" required>
-                    </div>
-
-                    <!-- Dirección -->
-                    <div class="mb-3">
-                        <label for="direccionPiloto" class="form-label">Dirección</label>
-                        <input type="text" class="form-control" id="direccionPiloto" name="direccion" maxlength="200" placeholder="Ej. Zona 1, Ciudad">
-                    </div>
-
-                    <!-- Teléfono -->
-                    <div class="mb-3">
-                        <label for="telefonoPiloto" class="form-label">Teléfono</label>
-                        <input type="tel" class="form-control" id="telefonoPiloto" name="telefono" maxlength="20" placeholder="Ej. 5555-5555">
-                    </div>
-
-                    <!-- Correo -->
-                    <div class="mb-3">
-                        <label for="correoPiloto" class="form-label">Correo electrónico</label>
-                        <input type="email" class="form-control" id="correoPiloto" name="correo" maxlength="100" placeholder="Ej. juan@email.com">
-                    </div>
-
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        Guardar piloto
-                    </button>
-                </div>
-            </form>
-
         </div>
     </div>
-</div>
 
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

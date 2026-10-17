@@ -13,6 +13,16 @@ const ubicacionParqueo = document.getElementById("ubicacionParqueo");
 const capacidadParqueo = document.getElementById("capacidadParqueo");
 const estacionParqueo = document.getElementById("estacionParqueo");
 const btnGuardarParqueo = document.getElementById("btnGuardarParqueo");
+// para
+const buscarParqueos = document.getElementById("buscarParqueos");
+const registrosPorPaginaParqueos = document.getElementById("registrosPorPaginaParqueos");
+const infoPaginacionParqueos = document.getElementById("infoPaginacionParqueos");
+const paginacionParqueos = document.getElementById("paginacionParqueos");
+let listaParqueos = [];
+let paginaActualParqueos = 1;
+let textoBusquedaParqueos = "";
+let limiteParqueos = 10;
+
 
 const modalParqueo = new bootstrap.Modal(modalParqueoElemento);
 
@@ -98,48 +108,111 @@ async function cargarParqueos() {
     try {
         const parqueos = await solicitarAPI(API_PARQUEOS);
 
-        tablaParqueos.innerHTML = "";
+        listaParqueos = Array.isArray(parqueos) ? parqueos : [];
+        paginaActualParqueos = 1;
 
-        if (!Array.isArray(parqueos) || parqueos.length === 0) {
-            tablaParqueos.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">
-                        No hay parqueos registrados.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
+        mostrarParqueos();
 
-        parqueos.forEach(parqueo => {
-            const fila = document.createElement("tr");
+    } catch (error) {
+        console.error("Error al cargar parqueos:", error);
 
-            const celdaId = document.createElement("td");
-            celdaId.textContent = parqueo.id_parqueo;
+        tablaParqueos.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-danger">
+                    No se pudieron cargar los parqueos.
+                </td>
+            </tr>
+        `;
 
-            const celdaUbicacion = document.createElement("td");
-            celdaUbicacion.textContent = parqueo.ubicacion;
+        infoPaginacionParqueos.textContent =
+            "No se pudieron cargar los registros.";
 
-            const celdaCapacidad = document.createElement("td");
-            celdaCapacidad.textContent = parqueo.capacidad;
+        paginacionParqueos.replaceChildren();
 
-            const celdaEstacion = document.createElement("td");
-            celdaEstacion.textContent = parqueo.estacion;
+        alert("Error al consultar los parqueos: " + error.message);
+    }
+}
 
-            const celdaEstado = document.createElement("td");
-            const activo = Number(parqueo.estado) === 1;
+// mostrarP
+function mostrarParqueos() {
+    tablaParqueos.replaceChildren();
 
-            const insignia = document.createElement("span");
-            insignia.className = activo
-                ? "badge bg-success"
-                : "badge bg-secondary";
-            insignia.textContent = activo ? "Activo" : "Desactivado";
+    const texto = textoBusquedaParqueos.trim().toLowerCase();
 
-            celdaEstado.appendChild(insignia);
+    const parqueosFiltrados = listaParqueos.filter(parqueo => {
+        const valores = [
+            parqueo.id_parqueo,
+            parqueo.ubicacion,
+            parqueo.capacidad,
+            parqueo.estacion,
+            Number(parqueo.estado) === 1 ? "Activo" : "Desactivado"
+        ];
 
-            const celdaAcciones = document.createElement("td");
-            celdaAcciones.className = "text-end";
+        return valores.some(valor =>
+            String(valor ?? "").toLowerCase().includes(texto)
+        );
+    });
 
+    const totalRegistros = parqueosFiltrados.length;
+    const totalPaginas = Math.ceil(totalRegistros / limiteParqueos);
+
+    if (totalRegistros === 0) {
+        tablaParqueos.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    ${
+                        texto
+                            ? "No se encontraron parqueos con esa búsqueda."
+                            : "No hay parqueos registrados."
+                    }
+                </td>
+            </tr>
+        `;
+
+        infoPaginacionParqueos.textContent = "Mostrando 0 registros.";
+        renderizarPaginacionParqueos(0);
+        return;
+    }
+
+    if (paginaActualParqueos > totalPaginas) {
+        paginaActualParqueos = totalPaginas;
+    }
+
+    const inicio = (paginaActualParqueos - 1) * limiteParqueos;
+    const fin = Math.min(inicio + limiteParqueos, totalRegistros);
+
+    const parqueosPagina = parqueosFiltrados.slice(inicio, fin);
+
+    parqueosPagina.forEach(parqueo => {
+        const fila = document.createElement("tr");
+
+        const celdaId = document.createElement("td");
+        celdaId.textContent = parqueo.id_parqueo;
+
+        const celdaUbicacion = document.createElement("td");
+        celdaUbicacion.textContent = parqueo.ubicacion;
+
+        const celdaCapacidad = document.createElement("td");
+        celdaCapacidad.textContent = parqueo.capacidad;
+
+        const celdaEstacion = document.createElement("td");
+        celdaEstacion.textContent = parqueo.estacion;
+
+        // Estado
+        const celdaEstado = document.createElement("td");
+        const activo = Number(parqueo.estado) === 1;
+
+        const insignia = document.createElement("span");
+        insignia.className = activo
+            ? "badge bg-success"
+            : "badge bg-secondary";
+        insignia.textContent = activo ? "Activo" : "Desactivado";
+
+        celdaEstado.appendChild(insignia);
+
+        // Acciones
+        const celdaAcciones = document.createElement("td");
+        celdaAcciones.className = "text-end";
 
         if (activo) {
             const botonEditar = document.createElement("button");
@@ -172,34 +245,78 @@ async function cargarParqueos() {
             celdaAcciones.textContent = "Sin acciones";
         }
 
+        fila.append(
+            celdaId,
+            celdaUbicacion,
+            celdaCapacidad,
+            celdaEstacion,
+            celdaEstado,
+            celdaAcciones
+        );
 
-            fila.append(
-                celdaId,
-                celdaUbicacion,
-                celdaCapacidad,
-                celdaEstacion,
-                celdaEstado,
-                celdaAcciones
-            );
+        tablaParqueos.appendChild(fila);
+    });
 
-            tablaParqueos.appendChild(fila);
-        });
+    infoPaginacionParqueos.textContent =
+        `Mostrando ${inicio + 1} a ${fin} de ${totalRegistros} registros.`;
 
-    } catch (error) {
-        console.error("Error al cargar parqueos:", error);
-
-        tablaParqueos.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center text-danger">
-                    No se pudieron cargar los parqueos.
-                </td>
-            </tr>
-        `;
-
-        alert("Error al consultar los parqueos: " + error.message);
-    }
+    renderizarPaginacionParqueos(totalPaginas);
 }
 
+// paginacion
+function renderizarPaginacionParqueos(totalPaginas) {
+    paginacionParqueos.replaceChildren();
+
+    /*if (totalPaginas <= 1) {
+        return;
+    } */
+
+    function agregarBoton(texto, pagina, deshabilitado = false, activo = false) {
+        const elemento = document.createElement("li");
+
+        elemento.className =
+            `page-item${deshabilitado ? " disabled" : ""}${activo ? " active" : ""}`;
+
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "page-link";
+        boton.textContent = texto;
+        boton.disabled = deshabilitado;
+
+        boton.addEventListener("click", () => {
+            paginaActualParqueos = pagina;
+            mostrarParqueos();
+        });
+
+        elemento.appendChild(boton);
+        paginacionParqueos.appendChild(elemento);
+    }
+
+    agregarBoton(
+        "Anterior",
+        paginaActualParqueos - 1,
+        paginaActualParqueos === 1
+    );
+
+    const inicioPaginas = Math.max(1, paginaActualParqueos - 2);
+    const finPaginas = Math.min(totalPaginas, inicioPaginas + 4);
+    const inicioAjustado = Math.max(1, finPaginas - 4);
+
+    for (let pagina = inicioAjustado; pagina <= finPaginas; pagina++) {
+        agregarBoton(
+            String(pagina),
+            pagina,
+            false,
+            pagina === paginaActualParqueos
+        );
+    }
+
+    agregarBoton(
+        "Siguiente",
+        paginaActualParqueos + 1,
+        paginaActualParqueos === totalPaginas
+    );
+}
 
 // ============================================
 // ABRIR MODAL PARA REGISTRAR
@@ -327,3 +444,16 @@ async function desactivarParqueo(id) {
         alert("No se pudo desactivar el parqueo: " + error.message);
     }
 }
+
+buscarParqueos.addEventListener("input", () => {
+    textoBusquedaParqueos = buscarParqueos.value;
+    paginaActualParqueos = 1;
+    mostrarParqueos();
+});
+
+registrosPorPaginaParqueos.addEventListener("change", () => {
+    limiteParqueos = Number(registrosPorPaginaParqueos.value);
+    paginaActualParqueos = 1;
+    mostrarParqueos();
+});
+

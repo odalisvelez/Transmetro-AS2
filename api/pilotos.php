@@ -18,6 +18,7 @@ if ($metodo === "GET") {
                 correo,
                 estado
             FROM piloto
+            WHERE estado = 1
             ORDER BY id_piloto";
 
     $resultado = $conexion->query($sql);

@@ -1,0 +1,342 @@
+
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>Gestión de alertas | Transmetro</title>
+        <!-- Bootstrap -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        >
+        <!-- Iconos -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+            rel="stylesheet"
+        >
+        <!-- Estilos propios -->
+        <link rel="stylesheet" href="../css/estilos.css">
+    </head>
+
+    <body>
+
+        <div class="app-container">
+
+            <!-- Menú lateral -->
+            <div id="contenedorMenu"></div>
+
+            <main class="main-content">
+
+                <!-- Encabezado -->
+                <div id="contenedorEncabezado"></div>
+
+                <section class="content-section">
+
+                    <!-- Título del módulo -->
+                    <div class="section-header">
+                        <div>
+                            <h2>Visitas a estaciones</h2>
+
+                            <p class="text-muted mb-0">
+                                Registra las visitas de los buses y consulta
+                                la demanda de pasajeros en las estaciones.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Mensajes generales -->
+                    <div
+                        id="mensaje"
+                        class="alert d-none"
+                        role="alert"
+                        aria-live="polite">
+                    </div>
+
+                    <!-- Formulario de registro -->
+                    <div class="card mb-4">
+
+                        <div class="card-header">
+                            <h2 class="h6 mb-0">
+                                <i class="bi bi-clipboard-plus"></i>
+                                Registrar visita
+                            </h2>
+                        </div>
+
+                        <div class="card-body">
+
+                            <form id="formularioVisita">
+
+                                <div class="row g-3">
+
+                                    <!-- Bus -->
+                                    <div class="col-md-6">
+
+                                        <label
+                                            for="id_bus"
+                                            class="form-label">
+                                            Bus
+                                        </label>
+
+                                        <select
+                                            id="id_bus"
+                                            name="id_bus"
+                                            class="form-select"
+                                            required>
+
+                                            <option value="">
+                                                Selecciona un bus
+                                            </option>
+
+                                        </select>
+
+                                    </div>
+
+                                    <!-- Estación -->
+                                    <div class="col-md-6">
+
+                                        <label
+                                            for="id_estacion"
+                                            class="form-label">
+                                            Estación
+                                        </label>
+
+                                        <select
+                                            id="id_estacion"
+                                            name="id_estacion"
+                                            class="form-select"
+                                            required>
+
+                                            <option value="">
+                                                Selecciona una estación
+                                            </option>
+
+                                        </select>
+
+                                    </div>
+
+                                    <!-- Pasajeros esperando -->
+                                    <div class="col-md-6">
+
+                                        <label
+                                            for="pasajeros_esperando"
+                                            class="form-label">
+                                            Pasajeros esperando
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            id="pasajeros_esperando"
+                                            name="pasajeros_esperando"
+                                            class="form-control"
+                                            min="0"
+                                            step="1"
+                                            placeholder="Ej. 120"
+                                            required>
+
+                                        <div class="form-text">
+                                            Ingresa la cantidad de pasajeros
+                                            que esperan en la estación.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <!-- Botones -->
+                                <div class="mt-4 d-flex gap-2">
+
+                                    <button
+                                        type="submit"
+                                        id="btnRegistrar"
+                                        class="btn btn-primary">
+
+                                        <i class="bi bi-save"></i>
+                                        Registrar visita
+
+                                    </button>
+
+                                    <button
+                                        type="reset"
+                                        class="btn btn-outline-secondary">
+
+                                        <i class="bi bi-eraser"></i>
+                                        Limpiar
+
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+                    </div>
+
+                    <!-- Resultado de las reglas de negocio -->
+                    <div
+                        id="resultadoReglas"
+                        class="mb-4"
+                        aria-live="polite">
+                    </div>
+
+                    <!-- Tabla de visitas -->
+                    <div class="card">
+
+                        <div
+                            class="card-header d-flex justify-content-between
+                                align-items-center">
+
+                            <h2 class="h6 mb-0">
+                                <i class="bi bi-list-ul"></i>
+                                Visitas registradas
+                            </h2>
+
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary btn-sm"
+                                id="btnActualizar">
+
+                                <i class="bi bi-arrow-clockwise"></i>
+                                Actualizar
+
+                            </button>
+
+                        </div>
+
+                        <!-- Búsqueda -->
+                        <div class="card-body border-bottom">
+
+                            <label
+                                for="buscarVisita"
+                                class="form-label">
+                                Buscar visitas
+                            </label>
+
+                            <input
+                                type="search"
+                                id="buscarVisita"
+                                class="form-control"
+                                placeholder="Buscar por bus, estación o fecha...">
+
+                        </div>
+
+                        <!-- Tabla -->
+                        <div class="table-responsive">
+
+                            <table
+                                class="table table-striped table-hover
+                                    align-middle mb-0">
+
+                                <thead class="table-light">
+
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Bus</th>
+                                        <th>Estación</th>
+                                        <th>Fecha y hora</th>
+                                        <th>Pasajeros esperando</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody id="tablaVisitas">
+
+                                    <tr>
+                                        <td
+                                            colspan="5"
+                                            class="text-center py-4">
+
+                                            Las visitas se cargarán aquí.
+
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <!-- Paginación -->
+                        <div class="card-footer">
+
+                            <div
+                                class="d-flex flex-wrap justify-content-between
+                                    align-items-center gap-2">
+
+                                <small
+                                    id="infoPaginacion"
+                                    class="text-muted">
+                                    Sin datos
+                                </small>
+
+                                <div
+                                    class="d-flex align-items-center gap-2">
+
+                                    <label
+                                        for="registrosPorPagina"
+                                        class="form-label mb-0 small">
+                                        Registros por página
+                                    </label>
+
+                                    <select
+                                        id="registrosPorPagina"
+                                        class="form-select form-select-sm"
+                                        style="width: auto;">
+
+                                        <option value="5" selected>5</option>
+                                        <option value="10">10</option>
+                                        <option value="20">20</option>
+                                        <option value="50">50</option>
+
+                                    </select>
+
+                                </div>
+
+                                <nav aria-label="Paginación de visitas">
+
+                                    <ul
+                                        id="paginacion"
+                                        class="pagination pagination-sm mb-0">
+                                    </ul>
+
+                                </nav>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </main>
+
+        </div>
+        <!-- Bootstrap JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <!-- Conexión con la API -->
+        <script src="../js/api.js"></script>
+
+        <!-- Lógica del módulo -->
+        <script src="../js/modulos/visitas.js"></script>
+
+        <!-- Cargador de componentes -->
+        <script src="../js/componentes.js"></script>
+
+        <script>
+            cargarComponente(
+                "contenedorMenu",
+                "../componentes/menu.html"
+            );
+
+            cargarComponente(
+                "contenedorEncabezado",
+                "../componentes/encabezado.html"
+            );
+        </script>
+
+    </body>
+</html>

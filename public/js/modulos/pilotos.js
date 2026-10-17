@@ -1,28 +1,34 @@
+
 const API_PILOTOS = "pilotos.php";
 
-// Referencias a los elementos HTML
+// CONFIGURACIÓN Y REFERENCIAS HTML
 const tablaPilotos = document.getElementById("tablaPilotos");
-const botonNuevoPiloto = document.getElementById("btnNuevoPiloto");
-const elementoModalPiloto = document.getElementById("modalPiloto");
-const formularioPiloto = document.getElementById("formPiloto");
-const campoNombrePiloto = document.getElementById("nombrePiloto");
-// Agrega referencias si tienes estos campos en tu formulario HTML:
-const campoDireccionPiloto = document.getElementById("direccionPiloto");
-const campoTelefonoPiloto = document.getElementById("telefonoPiloto");
-const campoCorreoPiloto = document.getElementById("correoPiloto");
+const btnNuevoPiloto = document.getElementById("btnNuevoPiloto");
 
+const modalPilotoElemento = document.getElementById("modalPiloto");
+const formPiloto = document.getElementById("formPiloto");
 const tituloModalPiloto = document.getElementById("tituloModalPiloto");
-const modalPiloto = new bootstrap.Modal(elementoModalPiloto);
 
-// Guarda el ID cuando estamos editando.
-// Si es null, estamos registrando un piloto
-let idPilotoEditar = null;
+const nombrePiloto = document.getElementById("nombrePiloto");
+const direccionPiloto = document.getElementById("direccionPiloto");
+const telefonoPiloto = document.getElementById("telefonoPiloto");
+const correoPiloto = document.getElementById("correoPiloto");
 
+const buscarPilotos = document.getElementById("buscarPilotos");
+const registrosPorPaginaPilotos = document.getElementById("registrosPorPaginaPilotos");
+const infoPaginacionPilotos = document.getElementById("infoPaginacionPilotos");
+const paginacionPilotos = document.getElementById("paginacionPilotos");
 
-// =====================================
-// 1. CONSULTAR Y MOSTRAR PILOTOS
-// =====================================
+const modalPiloto = bootstrap.Modal.getOrCreateInstance( modalPilotoElemento );
 
+// VARIABLES DEL MÓDULO
+let listaPilotos = [];
+let paginaActualPilotos = 1;
+let textoBusquedaPilotos = "";
+let limitePilotos = 10;
+let idPilotoEdicion = null;
+
+// CONSULTAR PILOTOS
 async function cargarPilotos() {
     tablaPilotos.innerHTML = `
         <tr>
@@ -33,76 +39,16 @@ async function cargarPilotos() {
     `;
 
     try {
-        const respuesta = await solicitarAPI(API_PILOTOS);
-        // Aseguramos que 'pilotos' sea un array (dependiendo de cómo responda tu API)
-        const pilotos = Array.isArray(respuesta) ? respuesta : respuesta.data || [];
+        const pilotos = await solicitarAPI(API_PILOTOS);
 
-        tablaPilotos.innerHTML = "";
-
-        if (pilotos.length === 0) {
-            tablaPilotos.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center">
-                        No hay pilotos registrados.
-                    </td>
-                </tr>
-            `;
-            return;
+        if (!Array.isArray(pilotos)) {
+            throw new Error("La API no devolvió una lista de pilotos válida.");
         }
 
-        pilotos.forEach((piloto) => {
-            const fila = document.createElement("tr");
+        listaPilotos = pilotos;
+        paginaActualPilotos = 1;
 
-            const celdaId = document.createElement("td");
-            celdaId.textContent = piloto.id_piloto;
-
-            const celdaNombre = document.createElement("td");
-            celdaNombre.textContent = piloto.nombre;
-
-            const celdaDireccion = document.createElement("td");
-            celdaDireccion.textContent = piloto.direccion;
-
-            const celdaTelefono = document.createElement("td");
-            celdaTelefono.textContent = piloto.telefono;
-
-            const celdaCorreo = document.createElement("td");
-            celdaCorreo.textContent = piloto.correo;
-
-            const celdaEstado = document.createElement("td");
-            const etiquetaEstado = document.createElement("span");
-
-            etiquetaEstado.className = "badge text-bg-success";
-            etiquetaEstado.textContent = "Activo";
-            celdaEstado.appendChild(etiquetaEstado);
-
-            const celdaAcciones = document.createElement("td");
-            celdaAcciones.className = "text-end";
-
-            const botonEditar = document.createElement("button");
-            botonEditar.type = "button";
-            botonEditar.className = "btn btn-sm btn-outline-primary me-2";
-            botonEditar.textContent = "Editar";
-            botonEditar.dataset.accion = "editar";
-            botonEditar.dataset.id = piloto.id_piloto;
-            botonEditar.dataset.nombre = piloto.nombre;
-            botonEditar.dataset.direccion = piloto.direccion;
-            botonEditar.dataset.telefono = piloto.telefono;
-            botonEditar.dataset.correo = piloto.correo;
-            botonEditar.dataset.estado = piloto.estado;
-
-            const botonEliminar = document.createElement("button");
-            botonEliminar.type = "button";
-            botonEliminar.className = "btn btn-sm btn-outline-danger";
-            botonEliminar.textContent = "Eliminar";
-            botonEliminar.dataset.accion = "eliminar";
-            botonEliminar.dataset.id = piloto.id_piloto;
-            botonEliminar.dataset.nombre = piloto.nombre;
-
-            celdaAcciones.append(botonEditar, botonEliminar);
-            fila.append(celdaId, celdaNombre, celdaDireccion, celdaTelefono, celdaCorreo, celdaEstado, celdaAcciones);
-
-            tablaPilotos.appendChild(fila);
-        });
+        mostrarPilotos();
 
     } catch (error) {
         console.error("Error al cargar pilotos:", error);
@@ -114,168 +60,403 @@ async function cargarPilotos() {
                 </td>
             </tr>
         `;
+
+        infoPaginacionPilotos.textContent =
+            "No se pudieron cargar los registros.";
+
+        paginacionPilotos.replaceChildren();
+
+        alert("Error al consultar los pilotos: " + error.message);
     }
 }
 
+// MOSTRAR PILOTOS CON BÚSQUEDA Y PAGINACIÓN
+function mostrarPilotos() {
+    tablaPilotos.replaceChildren();
 
-// =====================================
-// 2. PREPARAR EL MODAL PARA REGISTRAR
-// =====================================
+    const texto = textoBusquedaPilotos.trim().toLowerCase();
 
-botonNuevoPiloto.addEventListener("click", function () {
-    idPilotoEditar = null;
-    formularioPiloto.reset();
-    tituloModalPiloto.textContent = "Nuevo Piloto";
-    modalPiloto.show();
-});
+    const pilotosFiltrados = listaPilotos.filter(piloto => {
+        const valores = [
+            piloto.id_piloto,
+            piloto.nombre,
+            piloto.direccion,
+            piloto.telefono,
+            piloto.correo ?? "",
+            Number(piloto.estado) === 1 ? "Activo" : "Desactivado"
+        ];
 
+        return valores.some(valor =>
+            String(valor ?? "").toLowerCase().includes(texto)
+        );
+    });
 
-// =====================================
-// 3. REGISTRAR O EDITAR CON POST / PUT
-// =====================================
+    const totalRegistros = pilotosFiltrados.length;
+    const totalPaginas = Math.ceil(
+        totalRegistros / limitePilotos
+    );
 
-formularioPiloto.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
+    if (totalRegistros === 0) {
+        tablaPilotos.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-muted">
+                    ${
+                        texto
+                            ? "No se encontraron pilotos con esa búsqueda."
+                            : "No hay pilotos registrados."
+                    }
+                </td>
+            </tr>
+        `;
 
-    const nombre = campoNombrePiloto.value.trim();
-    if (nombre === "") {
-        alert("Ingresar el nombre del piloto");
-        campoNombrePiloto.focus();
+        infoPaginacionPilotos.textContent =
+            "Mostrando 0 registros.";
+
+        renderizarPaginacionPilotos(0);
         return;
     }
 
-    
-    const direccion = campoDireccionPiloto.value.trim();
-    if (direccion === "") {
-        alert(" Ingresar la direccion del piloto");
-        campoDireccionPiloto.focus();
-        return;
+    if (paginaActualPilotos > totalPaginas) {
+        paginaActualPilotos = totalPaginas;
     }
 
-    const telefono = campoTelefonoPiloto.value.trim();
-    if (telefono === "") {
-        alert(" Ingresar el telefono del piloto");
-        campoNombrePiloto.focus();
-        return;
-    }
+    const inicio = (paginaActualPilotos - 1) * limitePilotos;
+    const fin = Math.min(
+        inicio + limitePilotos,
+        totalRegistros
+    );
 
-    const correo = campoCorreoPiloto.value.trim();  
+    const pilotosPagina = pilotosFiltrados.slice(inicio, fin);
 
+    pilotosPagina.forEach(piloto => {
+        const fila = document.createElement("tr");
+        const activo = Number(piloto.estado) === 1;
 
-    //Recoge los demás datos si los tienes en el formulario
-    const datosPiloto = {
-        nombre: nombre,
-        direccion: document.getElementById("direccion")?.value.trim() || "",
-        telefono: document.getElementById("telefono")?.value.trim() || "",
-        correo: document.getElementById("correo")?.value.trim() || ""
-    };  
+        // ID
+        const celdaId = document.createElement("td");
+        celdaId.textContent = piloto.id_piloto;
 
-    let metodo = "POST";
-    let archivo = API_PILOTOS;
+        // Nombre
+        const celdaNombre = document.createElement("td");
+        celdaNombre.textContent = piloto.nombre;
 
-    if (idPilotoEditar !== null) {
-        const confirmar = confirm(`¿Deseas guardar los cambios del piloto "${nombre}"?`);
+        // Dirección
+        const celdaDireccion = document.createElement("td");
+        celdaDireccion.textContent = piloto.direccion ?? "—";
 
-        if (!confirmar) {
-            return;
+        // Teléfono
+        const celdaTelefono = document.createElement("td");
+        celdaTelefono.textContent = piloto.telefono ?? "—";
+
+        // Correo
+        const celdaCorreo = document.createElement("td");
+        celdaCorreo.textContent = piloto.correo || "—";
+
+        // Estado
+        const celdaEstado = document.createElement("td");
+        const insignia = document.createElement("span");
+
+        insignia.className = activo
+            ? "badge text-bg-success"
+            : "badge text-bg-secondary";
+
+        insignia.textContent = activo ? "Activo" : "Desactivado";
+
+        celdaEstado.appendChild(insignia);
+
+        // Acciones
+        const celdaAcciones = document.createElement("td");
+        celdaAcciones.className = "text-center";
+
+        // ver historial_educ
+        const botonHistorial = document.createElement("button");
+        botonHistorial.type = "button";
+        botonHistorial.className =
+            "btn btn-sm btn-outline-info me-2";
+        botonHistorial.textContent = "Historial Educativo";
+
+        botonHistorial.addEventListener("click", () => {
+            verHistorialPiloto(piloto);
+        });
+
+        celdaAcciones.appendChild(botonHistorial);
+
+        if (activo) {
+            const botonEditar = document.createElement("button");
+            botonEditar.type = "button";
+            botonEditar.className =
+                "btn btn-sm btn-outline-primary me-2";
+            botonEditar.textContent = "Editar";
+
+            botonEditar.addEventListener("click", () => {
+                abrirModalEditarPiloto(piloto);
+            });
+
+            const botonDesactivar = document.createElement("button");
+            botonDesactivar.type = "button";
+            botonDesactivar.className =
+                "btn btn-sm btn-outline-danger";
+            botonDesactivar.textContent = "Eliminar";
+
+            botonDesactivar.addEventListener("click", () => {
+                desactivarPiloto(piloto);
+            });
+
+            celdaAcciones.append(
+                botonEditar,
+                botonDesactivar
+            );
+        } else {
+            celdaAcciones.textContent = "Sin acciones";
         }
 
-        metodo = "PUT";
-        archivo = `${API_PILOTOS}?id=${idPilotoEditar}`;
+        fila.append(
+            celdaId,
+            celdaNombre,
+            celdaDireccion,
+            celdaTelefono,
+            celdaCorreo,
+            celdaEstado,
+            celdaAcciones
+        );
+
+        tablaPilotos.appendChild(fila);
+    });
+
+    infoPaginacionPilotos.textContent =
+        `Mostrando ${inicio + 1} a ${fin} de ${totalRegistros} registros.`;
+
+    renderizarPaginacionPilotos(totalPaginas);
+}
+
+// PAGINACIÓN
+function renderizarPaginacionPilotos(totalPaginas) {
+    paginacionPilotos.replaceChildren();
+
+    /*if (totalPaginas <= 1) {
+        return;
+    }*/
+
+    function agregarBoton(
+        texto,
+        pagina,
+        deshabilitado = false,
+        activo = false
+    ) {
+        const elemento = document.createElement("li");
+
+        elemento.className =
+            `page-item${deshabilitado ? " disabled" : ""}` +
+            `${activo ? " active" : ""}`;
+
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "page-link";
+        boton.textContent = texto;
+        boton.disabled = deshabilitado;
+
+        boton.addEventListener("click", () => {
+            paginaActualPilotos = pagina;
+            mostrarPilotos();
+        });
+
+        elemento.appendChild(boton);
+        paginacionPilotos.appendChild(elemento);
     }
 
+    agregarBoton(
+        "Anterior",
+        paginaActualPilotos - 1,
+        paginaActualPilotos === 1
+    );
+
+    const inicioPaginas = Math.max(
+        1,
+        paginaActualPilotos - 2
+    );
+
+    const finPaginas = Math.min(
+        totalPaginas,
+        inicioPaginas + 4
+    );
+
+    const inicioAjustado = Math.max(
+        1,
+        finPaginas - 4
+    );
+
+    for (
+        let pagina = inicioAjustado;
+        pagina <= finPaginas;
+        pagina++
+    ) {
+        agregarBoton(
+            String(pagina),
+            pagina,
+            false,
+            pagina === paginaActualPilotos
+        );
+    }
+
+    agregarBoton(
+        "Siguiente",
+        paginaActualPilotos + 1,
+        paginaActualPilotos === totalPaginas
+    );
+}
+
+// PREPARAR MODAL PARA REGISTRAR
+function abrirModalNuevoPiloto() {
+    idPilotoEdicion = null;
+
+    formPiloto.reset();
+    tituloModalPiloto.textContent = "Nuevo piloto";
+
+    modalPiloto.show();
+}
+
+// PREPARAR MODAL PARA EDITAR
+function abrirModalEditarPiloto(piloto) {
+    idPilotoEdicion = Number(piloto.id_piloto);
+
+    formPiloto.reset();
+
+    nombrePiloto.value = piloto.nombre ?? "";
+    direccionPiloto.value = piloto.direccion ?? "";
+    telefonoPiloto.value = piloto.telefono ?? "";
+    correoPiloto.value = piloto.correo ?? "";
+
+    tituloModalPiloto.textContent = "Editar piloto";
+
+    modalPiloto.show();
+}
+
+// REGISTRAR O ACTUALIZAR PILOTO
+formPiloto.addEventListener("submit", async evento => {
+    evento.preventDefault();
+
+    const nombre = nombrePiloto.value.trim();
+    const direccion = direccionPiloto.value.trim();
+    const telefono = telefonoPiloto.value.trim();
+    const correoIngresado = correoPiloto.value.trim();
+
+    // Validaciones antes de enviar los datos
+    if (!nombre || !direccion || !telefono) {
+        alert(
+            "El nombre, la dirección y el teléfono son obligatorios."
+        );
+        return;
+    }
+
+    const datos = {
+        nombre,
+        direccion,
+        telefono,
+        correo: correoIngresado || null
+    };
+
+    const editando = idPilotoEdicion !== null;
+
+    if (editando) {
+        datos.id_piloto = idPilotoEdicion;
+    }
+
+    const metodo = editando ? "PUT" : "POST";
+
     try {
-        const resultado = await solicitarAPI(archivo, metodo, datosPiloto);
+        const resultado = await solicitarAPI(
+            API_PILOTOS,
+            metodo,
+            datos
+        );
 
         alert(
             resultado.mensaje ||
-            (metodo === "POST"
-                ? "Piloto registrado correctamente."
-                : "Piloto actualizado correctamente.")
+            (
+                editando
+                    ? "Piloto actualizado correctamente."
+                    : "Piloto registrado correctamente."
+            )
         );
 
         modalPiloto.hide();
-        formularioPiloto.reset();
-        idPilotoEditar = null;
+        formPiloto.reset();
+
+        idPilotoEdicion = null;
 
         await cargarPilotos();
 
     } catch (error) {
-        console.error("Error al guardar Piloto:", error);
-        alert(error.message);
+        console.error("Error al guardar piloto:", error);
+
+        alert("No se pudo guardar el piloto: " + error.message);
     }
 });
 
+// DESACTIVAR PILOTO
+async function desactivarPiloto(piloto) {
+    const confirmar = confirm(
+        `¿Deseas eliminar al piloto "${piloto.nombre}"?`
+    );
 
-// =====================================
-// 4. EDITAR O ELIMINAR UN PILOTO
-// =====================================
-
-tablaPilotos.addEventListener("click", async function (evento) {
-    const boton = evento.target.closest("button[data-accion]");
-
-    if (!boton) {
+    if (!confirmar) {
         return;
     }
 
-    const id = boton.dataset.id;
-    const nombre = boton.dataset.nombre;
-    const accion = boton.dataset.accion;
-
-    // EDITAR
-    if (accion === "editar") {
-        idPilotoEditar = id;
-        campoNombrePiloto.value = nombre;
-        
-        // Rellenar los campos adicionales si existen
-        const campoDir = document.getElementById("direccionPiloto");
-        if (campoDir) campoDir.value = boton.dataset.direccion || "";
-
-        const campoTel = document.getElementById("telefonoPiloto");
-        if (campoTel) campoTel.value = boton.dataset.telefono || "";
-
-        const campoCor = document.getElementById("correoPiloto");
-        if (campoCor) campoCor.value = boton.dataset.correo || "";
-
-        tituloModalPiloto.textContent = "Editar Piloto";
-        modalPiloto.show();
-        return;
-    }
-
-    // ELIMINAR
-    if (accion === "eliminar") {
-        const confirmar = confirm(
-            `¿Estás seguro de eliminar al Piloto "${nombre}"?\n\n` +
-            "Esta acción no se puede deshacer."
+    try {
+        const resultado = await solicitarAPI(
+            API_PILOTOS,
+            "DELETE",
+            {
+                id_piloto: Number(piloto.id_piloto)
+            }
         );
 
-        if (!confirmar) {
-            return;
-        }
+        alert(
+            resultado.mensaje ||
+            "Piloto eliminado correctamente."
+        );
 
-        try {
-            const resultado = await solicitarAPI(
-                `${API_PILOTOS}?id=${id}`,
-                "DELETE"
-            );
+        await cargarPilotos();
 
-            alert(
-                resultado.mensaje ||
-                "Piloto eliminado correctamente."
-            );
+    } catch (error) {
+        console.error("Error al eliminar piloto:", error);
 
-            await cargarPilotos();
-
-        } catch (error) {
-            console.error("Error al eliminar Piloto:", error);
-            alert(error.message);
-        }
+        alert(
+            "No se pudo eliminar el piloto: " + error.message
+        );
     }
+}
+
+// ver historial
+function verHistorialPiloto(piloto) {
+        const idPiloto = encodeURIComponent(piloto.id_piloto);
+
+        window.location.href =`historial.html?id_piloto=${idPiloto}`;
+}
+
+// EVENTOS DE BÚSQUEDA Y PAGINACIÓN
+btnNuevoPiloto.addEventListener(
+    "click",
+    abrirModalNuevoPiloto
+);
+
+buscarPilotos.addEventListener("input", () => {
+    textoBusquedaPilotos = buscarPilotos.value;
+    paginaActualPilotos = 1;
+
+    mostrarPilotos();
 });
 
+registrosPorPaginaPilotos.addEventListener("change", () => {
+    limitePilotos = Number(
+        registrosPorPaginaPilotos.value
+    );
 
-// =====================================
+    paginaActualPilotos = 1;
+
+    mostrarPilotos();
+});
+
 // 5. CARGA INICIAL
-// =====================================
-
 cargarPilotos();
