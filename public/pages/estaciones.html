@@ -50,7 +50,7 @@
                     </button>
                 </div>
 
-                <div class="module-card">
+            <div class="module-card">
                     
                 <!-- Controles de búsqueda y cantidad de registros -->
                 <div class="row g-3 align-items-center mb-3">
@@ -68,69 +68,68 @@
                         >
                     </div>
 
-                    <div class="col-12 col-md-3">
-                        <label for="registrosPorPaginaEstaciones" class="form-label">
-                            Registros por página
-                        </label>
+                        <div class="col-12 col-md-3">
+                            <label for="registrosPorPaginaEstaciones" class="form-label">
+                                Registros por página
+                            </label>
 
-                        <select
-                            class="form-select"
-                            id="registrosPorPaginaEstaciones"
-                        >
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                    </div>
-
-                </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nombre de estación</th>
-                                    <th>Municipalidad</th>
-                                    <th>Estado</th>
-                                    <th class="text-end">Acciones</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="tablaEstaciones">
-                                <tr>
-                                    <td colspan="5" class="text-center">
-                                        Cargando estaciones...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Información de resultados y paginación -->
-                    <div class="d-flex flex-column flex-md-row
-                                justify-content-between align-items-center gap-3 mt-3">
-
-                        <p
-                            id="infoPaginacionEstaciones"
-                            class="mb-0 text-muted"
-                            aria-live="polite"
-                        >
-                            Mostrando registros...
-                        </p>
-
-                        <nav aria-label="Paginación de estaciones">
-                            <ul
-                                class="pagination pagination-sm mb-0"
-                                id="paginacionEstaciones"
+                            <select
+                                class="form-select"
+                                id="registrosPorPaginaEstaciones"
                             >
-                            </ul>
-                        </nav>
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
 
-                    </div>
-                </div>
+                     </div>
 
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre de estación</th>
+                                        <th>Municipalidad</th>
+                                        <th>Estado</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="tablaEstaciones">
+                                    <tr>
+                                        <td colspan="5" class="text-center">
+                                            Cargando estaciones...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Información de resultados y paginación -->
+                        <div class="d-flex flex-column flex-md-row
+                                    justify-content-between align-items-center gap-3 mt-3">
+
+                            <p
+                                id="infoPaginacionEstaciones"
+                                class="mb-0 text-muted"
+                                aria-live="polite"
+                            >
+                                Mostrando registros...
+                            </p>
+
+                            <nav aria-label="Paginación de estaciones">
+                                <ul
+                                    class="pagination pagination-sm mb-0"
+                                    id="paginacionEstaciones"
+                                >
+                                </ul>
+                            </nav>
+
+                        </div>
+                 </div>
             </section>
         </main>
     </div>
