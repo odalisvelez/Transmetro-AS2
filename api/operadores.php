@@ -1,6 +1,11 @@
 <?php
 
 require_once "../config/conexion.php";
+// para autenticacion
+require_once "../config/autenticacion.php";
+//
+$usuarioAutenticado = exigirAutenticacion($conexion);
+
 
 header("Content-Type: application/json; charset=UTF-8");
 

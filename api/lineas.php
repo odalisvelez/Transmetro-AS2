@@ -2,11 +2,29 @@
 <?php
 
 require_once "../config/conexion.php";
+require_once "../config/autenticacion.php";
+
+$usuarioAutenticado = exigirAutenticacion($conexion);
 
 header("Content-Type: application/json; charset=UTF-8");
 
 $metodo = $_SERVER["REQUEST_METHOD"];
 $datos = json_decode(file_get_contents("php://input"), true);
+
+
+/**
+ * Permisos para el modulo de lineas
+ * Administrador (1): todas las operaciones
+ * Operador (2): unicamente consultas GET
+ */
+if ((int) $usuarioAutenticado["id_rol"] === 2
+    && $metodo !== "GET") {
+
+    responder(403, [
+        "error" => "El operador solo tiene permiso para consultar las líneas."
+    ]);
+}
+
 
 /**
  * Responder con JSON y finalizar.

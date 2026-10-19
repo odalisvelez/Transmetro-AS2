@@ -19,6 +19,7 @@ if ($metodo === "GET") {
             FROM usuario u
             INNER JOIN rol r
                 ON u.id_rol = r.id_rol
+            WHERE u.id_rol = 2
             ORDER BY u.id_usuario";
 
     $resultado = $conexion->query($sql);
