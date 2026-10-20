@@ -2,9 +2,11 @@
 <?php
 
 require_once "../config/conexion.php";
+require_once "../config/autenticacion.php";
 
 header("Content-Type: application/json; charset=UTF-8");
 
+$usuarioAutenticado = exigirAutenticacion($conexion);
 $metodo = $_SERVER["REQUEST_METHOD"];
 
 

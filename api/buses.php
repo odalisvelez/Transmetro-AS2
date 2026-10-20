@@ -1,6 +1,7 @@
 <?php
 
 require_once "../config/conexion.php";
+require_once "../config/autenticacion.php";
 
 header("Content-Type: application/json; charset=UTF-8");
 
@@ -15,7 +16,16 @@ function responder($codigo, $contenido) {
     echo json_encode($contenido, JSON_UNESCAPED_UNICODE);
     exit;
 }
+/**
+ * Permisos para el modulo, solo admin.
+ */
+$usuarioAutenticado = exigirAutenticacion($conexion);
 
+if ((int) $usuarioAutenticado["id_rol"] !== 1) {
+    responder(403, [
+        "error" => "No tiene permisos para acceder al módulo"
+    ]);
+}
 /**
  * Comprobar si un registro existe y está activo.
  */

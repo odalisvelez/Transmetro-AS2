@@ -2,12 +2,9 @@
 <?php
 
 require_once "../config/conexion.php";
+require_once "../config/autenticacion.php";
 
 header("Content-Type: application/json; charset=UTF-8");
-
-$metodo = $_SERVER["REQUEST_METHOD"];
-
-$datos = json_decode(file_get_contents("php://input"), true);
 
 /**
  * Enviar respuesta JSON y finalizar la ejecución.
@@ -17,6 +14,21 @@ function responder($codigo, $datos) {
     echo json_encode($datos, JSON_UNESCAPED_UNICODE);
     exit;
 }
+/**
+ * Permisos para el módulo de municipalidades.
+ */
+$usuarioAutenticado = exigirAutenticacion($conexion);
+
+if ((int) $usuarioAutenticado["id_rol"] !== 1) {
+    responder(403, [
+        "error" => "No tiene permisos para acceder al módulo de municipalidades."
+    ]);
+}
+
+$metodo = $_SERVER["REQUEST_METHOD"];
+
+$datos = json_decode(file_get_contents("php://input"), true);
+
 
 /**
  * Verificar si el nombre ya existe.
