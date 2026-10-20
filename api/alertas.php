@@ -1,8 +1,11 @@
 <?php
 
 require_once "../config/conexion.php";
+require_once "../config/autenticacion.php";
 
 header("Content-Type: application/json; charset=UTF-8");
+
+$usuarioAutenticado = exigirAutenticacion($conexion);
 
 $metodo = $_SERVER["REQUEST_METHOD"];
 
@@ -158,6 +161,13 @@ if ($metodo === "GET"){
             $stmt->close();
         }
 }
+else {
 
+    header("Allow: GET, PUT");
+
+    responder(405, [
+        "error" => "Método HTTP no permitido."
+    ]);
+}
 $conexion->close();
 ?>
