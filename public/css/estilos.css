@@ -423,3 +423,163 @@ body {
     min-width: 0;
     background-color: var(--color-fondo);
 }
+
+/* para login
+/* =========================================
+   10. INICIO DE SESIÓN
+   ========================================= */
+
+.login-body {
+    min-height: 100vh;
+    margin: 0;
+    background: var(--color-fondo);
+    color: var(--color-texto);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+    background:
+        radial-gradient(circle at top left, #e1eee7 0, transparent 45%),
+        var(--color-fondo);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+    background: var(--color-blanco);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-borde);
+    box-shadow: 0 8px 28px rgba(16, 63, 50, 0.10);
+}
+
+.login-header {
+    padding: 32px 24px 28px;
+    text-align: center;
+    background: var(--color-sidebar);
+    color: var(--color-blanco);
+}
+
+.login-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 66px;
+    height: 66px;
+    margin: 0 auto 18px;
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-blanco);
+}
+
+.login-icono i {
+    font-size: 34px;
+}
+
+.login-header h1 {
+    margin-bottom: 9px;
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.login-header p {
+    margin-bottom: 0;
+    color: #d5e5dc;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.login-formulario {
+    padding: 30px;
+}
+
+.login-formulario .form-label {
+    margin-bottom: 8px;
+    color: var(--color-texto);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.login-formulario .form-control {
+    min-height: 46px;
+    padding: 10px 13px;
+    border: 1px solid var(--color-borde);
+    border-radius: 8px;
+    background-color: #fcfdfc;
+    color: var(--color-texto);
+    font-size: 14px;
+}
+
+.login-formulario .form-control:focus {
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px rgba(20, 92, 67, 0.12);
+    background-color: var(--color-blanco);
+}
+
+.btn-login {
+    min-height: 46px;
+    border: 1px solid var(--color-primario);
+    border-radius: 8px;
+    background-color: var(--color-primario);
+    color: var(--color-blanco);
+    font-size: 14px;
+    font-weight: 700;
+    transition: background-color 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.btn-login:hover {
+    border-color: var(--color-primario-hover);
+    background-color: var(--color-primario-hover);
+    color: var(--color-blanco);
+}
+
+.btn-login:focus-visible {
+    outline: 3px solid rgba(20, 92, 67, 0.25);
+    outline-offset: 2px;
+}
+
+.btn-login:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.login-formulario .alert {
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.login-pie {
+    margin: 22px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-borde);
+    color: var(--color-texto-secundario);
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        padding: 16px;
+    }
+
+    .login-header {
+        padding: 28px 20px 24px;
+    }
+
+    .login-header h1 {
+        font-size: 21px;
+    }
+
+    .login-formulario {
+        padding: 24px 20px;
+    }
+}

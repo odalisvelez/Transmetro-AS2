@@ -28,111 +28,8 @@
         <div class="d-flex min-vh-100">
 
             <!-- Menú lateral -->
-            <aside class="sidebar d-flex flex-column">
-
-                <a href="index.html" class="brand">
-                    <i class="bi bi-bus-front-fill"></i>
-                    <span>Gestión Transmetro</span>
-                </a>
-
-                <div class="sidebar-heading">
-                    MENÚ PRINCIPAL
-                </div>
-
-                <nav class="nav flex-column">
-
-                    <a href="index.html" class="nav-link active">
-                        <i class="bi bi-grid-1x2-fill"></i>
-                        <span>Inicio</span>
-                    </a>
-
-                    <div class="sidebar-heading mt-4">
-                        ADMINISTRACIÓN
-                    </div>
-
-                    <a href="pages/municipalidades.html" class="nav-link">
-                        <i class="bi bi-buildings"></i>
-                        <span>Municipalidades</span>
-                    </a>
-
-                    <a href="pages/lineas.html" class="nav-link">
-                        <i class="bi bi-signpost-2"></i>
-                        <span>Líneas</span>
-                    </a>
-
-                    <a href="pages/estaciones.html" class="nav-link">
-                        <i class="bi bi-geo-alt"></i>
-                        <span>Estaciones</span>
-                    </a>
-
-                    <a href="pages/rutas.html" class="nav-link">
-                        <i class="bi bi-geo-alt"></i>
-                        <span>Rutas</span>
-                    </a>
-
-                    <a href="pages/accesos.html" class="nav-link">
-                        <i class="bi bi-door-open"></i>
-                        <span>Accesos</span>
-                    </a>
-
-                    <a href="pages/parqueos.html" class="nav-link">
-                        <i class="bi bi-p-circle"></i>
-                        <span>Parqueos</span>
-                    </a>
-
-                    <a href="pages/buses.html" class="nav-link">
-                        <i class="bi bi-bus-front"></i>
-                        <span>Buses</span>
-                    </a>
-
-                    <a href="pages/pilotos.html" class="nav-link">
-                        <i class="bi bi-person-badge"></i>
-                        <span>Pilotos</span>
-                    </a>
-
-                    <a href="pages/guardias.html" class="nav-link">
-                        <i class="bi bi-shield-check"></i>
-                        <span>Guardias</span>
-                    </a>
-
-                    <a href="pages/operadores.html" class="nav-link">
-                        <i class="bi bi-person-gear"></i>
-                        <span>Operadores</span>
-                    </a>
-
-                    <a href="pages/equipos.html" class="nav-link">
-                        <i class="bi bi-pc-display"></i>
-                        <span>Equipos</span>
-                    </a>
-                    <!--
-                    <a href="pages/historial.html" class="nav-link">
-                        <i class="bi bi-mortarboard"></i>
-                        <span>Historial educativo</span>
-                    </a> -->
-
-                    <div class="sidebar-heading mt-4">
-                        OPERACIONES
-                    </div>
-
-                    <a href="pages/visitas.html" class="nav-link">
-                        <i class="bi bi-clipboard-check"></i>
-                        <span>Visitas de buses</span>
-                    </a>
-
-                    <a href="pages/alertas.html" class="nav-link">
-                        <i class="bi bi-bell"></i>
-                        <span>Alertas</span>
-                    </a>
-
-                </nav>
-
-                <div class="sidebar-footer mt-auto">
-                    Sistema de gestión
-                    <br>
-                    <span>Transmetro Guatemala</span>
-                </div>
-
-            </aside>
+            <!-- Menú lateral reutilizable -->
+            <div id="contenedorMenu"></div>
 
             <!-- Área principal -->
             <div class="main-content flex-grow-1">
@@ -271,15 +168,6 @@
                             <i class="bi bi-info-circle"></i>
                         </div>
 
-                        <!-- <div>
-                            <h2>Panel de control</h2>
-                            <p class="mb-0">
-                                La interfaz inicial está preparada.
-                                Los módulos se incorporarán progresivamente
-                                y sus datos se mostrarán al conectarlos con
-                                las API del sistema.
-                            </p>
-                        </div> -->
                     </section>
 
                 </main>
@@ -297,15 +185,64 @@
             src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
         </script>
         <script src="js/api.js"></script>
+        <script src="js/componentes.js"></script>
 
         <script>
-            solicitarAPI("municipalidades.php")
-                .then(datos => {
-                    console.log("Municipalidades:", datos);
-                })
-                .catch(error => {
-                    console.error("Error:", error.message);
+            document.addEventListener("DOMContentLoaded", async () => {
+
+                // Cargar el menu compartido
+                await cargarComponente(
+                    "contenedorMenu",
+                    "componentes/menu.html"
+                );
+
+                // Cerrar la sesion cuando se pulse el boton
+                document.addEventListener("click", async (evento) => {
+                    const boton = evento.target.closest("#btnCerrarSesion");
+
+                    if (!boton) {
+                        return;
+                    }
+
+                    boton.disabled = true;
+                    boton.innerHTML =
+                        '<span class="spinner-border spinner-border-sm"></span> Cerrando sesión...';
+
+                    try {
+                        const respuesta = await fetch(
+                            "/Transmetro-AS/login/logout.php",
+                            {
+                                method: "POST",
+                                credentials: "same-origin"
+                            }
+                        );
+
+                        const resultado = await respuesta.json();
+
+                        if (!respuesta.ok) {
+                            throw new Error(
+                                resultado.error ||
+                                resultado.mensaje ||
+                                "No se pudo cerrar la sesión."
+                            );
+                        }
+
+                        window.location.replace(
+                            // 
+                            "/Transmetro-AS/public/login.html"
+                        );
+
+                    } catch (error) {
+                        console.error(error);
+                        alert(error.message);
+
+                        boton.disabled = false;
+                        boton.innerHTML =
+                            '<i class="bi bi-box-arrow-right"></i> Cerrar sesión';
+                    }
                 });
+
+            });
         </script>
     </body>
 </html>
