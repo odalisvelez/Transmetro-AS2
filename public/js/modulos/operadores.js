@@ -327,7 +327,7 @@ btnNuevoOperador.addEventListener("click", async () => {
 
     tituloModalOperador.textContent = "Nuevo operador";
     btnGuardarOperador.innerHTML =
-        '<i class="bi bi-save"></i> Guardar operador';
+        'Guardar operador';
 
     try {
         btnGuardarOperador.disabled = true;
@@ -372,7 +372,7 @@ async function editarOperador(id) {
 
         tituloModalOperador.textContent = "Editar operador";
         btnGuardarOperador.innerHTML =
-            '<i class="bi bi-save"></i> Actualizar operador';
+            'Guardar Cambios';
 
         modalOperador.show();
 

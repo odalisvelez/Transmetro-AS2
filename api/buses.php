@@ -20,12 +20,19 @@ function responder($codigo, $contenido) {
  * Permisos para el modulo, solo admin.
  */
 $usuarioAutenticado = exigirAutenticacion($conexion);
+if ((int) $usuarioAutenticado["id_rol"] === 2
+    && $metodo !== "GET") {
 
+    responder(403, [
+        "error" => "El operador solo tiene permiso para consultar las líneas."
+    ]);
+}
+/*
 if ((int) $usuarioAutenticado["id_rol"] !== 1) {
     responder(403, [
         "error" => "No tiene permisos para acceder al módulo"
     ]);
-}
+} */
 /**
  * Comprobar si un registro existe y está activo.
  */

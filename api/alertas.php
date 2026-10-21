@@ -90,14 +90,6 @@ if ($metodo === "GET"){
 
         } else {
 
-            // Actualizar únicamente alertas que estén activas
-            /*$sql = "UPDATE alerta
-                    SET estado = 'Atendida'
-                    WHERE id_alerta = ?
-                    AND estado = 'Activa'";
-
-            $stmt = $conexion->prepare($sql);
-            $stmt->bind_param("i", $idAlerta); */
             // Actualizar alertas que todavía no estén atendidas
             $sql = "UPDATE alerta
                     SET estado = ?

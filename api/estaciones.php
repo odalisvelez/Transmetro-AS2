@@ -22,12 +22,19 @@ function responder($codigo, $datos) {
  * Permisos para el modulo de estaciones solo admin.
  */
 $usuarioAutenticado = exigirAutenticacion($conexion);
+if ((int) $usuarioAutenticado["id_rol"] === 2
+    && $metodo !== "GET") {
 
+    responder(403, [
+        "error" => "El operador solo tiene permiso para consultar las líneas."
+    ]);
+}
+/*
 if ((int) $usuarioAutenticado["id_rol"] !== 1) {
     responder(403, [
         "error" => "No tiene permisos para acceder al módulo de estaciones."
     ]);
-}
+} */
 
 /**
  * Verificar que la municipalidad exista.
